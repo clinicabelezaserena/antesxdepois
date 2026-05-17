@@ -131,6 +131,33 @@ section.active{display:block}
 .gal-grid.list-view{grid-template-columns:1fr}
 .gal-grid.list-view .gal-pair{height:180px}
 
+/* SELEÇÃO MÚLTIPLA */
+.gal-card.selected{outline:2px solid var(--brown);outline-offset:-2px}
+.gal-card.selected .gal-pair::after{content:'';position:absolute;inset:0;background:rgba(134,109,91,0.12);pointer-events:none}
+.sel-check{position:absolute;top:0.65rem;left:0.65rem;width:22px;height:22px;border-radius:3px;border:2px solid white;background:rgba(255,255,255,0.85);cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--brown);transition:all 0.15s;box-shadow:0 1px 4px rgba(0,0,0,0.15)}
+.sel-check.checked{background:var(--brown);border-color:var(--brown);color:white}
+
+/* BATCH BAR */
+.batch-bar{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--dark);color:white;border-radius:3px;padding:0.85rem 1.5rem;display:none;align-items:center;gap:1rem;z-index:500;box-shadow:0 4px 24px rgba(0,0,0,0.3);white-space:nowrap}
+.batch-bar.show{display:flex}
+.batch-count{font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;opacity:0.8}
+.batch-btn{background:none;border:1px solid rgba(255,255,255,0.3);color:white;padding:0.45rem 1rem;font-family:var(--sans);font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s}
+.batch-btn:hover{background:rgba(255,255,255,0.1)}
+.batch-btn.danger{border-color:rgba(220,100,100,0.5);color:#ffaaaa}
+.batch-btn.danger:hover{background:rgba(220,100,100,0.15)}
+.batch-cancel{background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.45rem 0.5rem}
+.batch-cancel:hover{color:white}
+
+/* VIEW TABELA */
+.gal-grid.table-view{display:block}
+.tbl-wrap{width:100%;border-collapse:collapse;font-family:var(--sans)}
+.tbl-wrap th{font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--brown);font-weight:500;padding:0.75rem 1rem;border-bottom:1px solid var(--sand);text-align:left;white-space:nowrap}
+.tbl-wrap td{padding:0.65rem 1rem;border-bottom:1px solid var(--blush);font-size:0.82rem;color:var(--dark);vertical-align:middle}
+.tbl-wrap tr:hover td{background:var(--cream)}
+.tbl-thumb{width:64px;height:48px;object-fit:contain;background:#F5F2EF;border-radius:2px;cursor:zoom-in;display:block}
+.tbl-check{width:36px}
+.tbl-actions{display:flex;gap:0.4rem;align-items:center}
+
 /* LIGHTBOX */
 .lb-overlay{position:fixed;inset:0;background:rgba(30,20,16,0.92);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;cursor:zoom-out}
 .lb-img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:2px;box-shadow:0 8px 48px rgba(0,0,0,0.4)}
@@ -280,9 +307,10 @@ const CLOUDINARY_PRESET= 'beleza_serena';
       </div>
     </div>
     <div class="preview-foot">
-      <div>
+      <div class="cap-info">
         <div class="cap-proc" id="pProc">—</div>
         <div class="cap-meta" id="pMeta">—</div>
+        <div class="cap-name" id="pName" style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--sand);margin-top:0.15rem"></div>
       </div>
       <button class="btn-dl" onclick="dlCurrent()">↓ &nbsp;Download</button>
     </div>
@@ -334,10 +362,20 @@ const CLOUDINARY_PRESET= 'beleza_serena';
       <button class="sort-btn" id="sProc" onclick="setSort('proc',this)">Procedimento</button>
     </div>
     <button class="fav-toggle" id="favToggle" onclick="toggleFavOnly()">☆ Somente favoritos</button>
+    <button class="fav-toggle" id="selToggle" onclick="toggleSelectMode()">☐ Selecionar</button>
     <div class="view-group">
       <button class="view-btn active" id="vGrid" onclick="setView('grid',this)" title="Grade">⊞</button>
       <button class="view-btn" id="vList" onclick="setView('list',this)" title="Lista">☰</button>
+      <button class="view-btn" id="vTable" onclick="setView('table',this)" title="Tabela">▤</button>
     </div>
+  </div>
+
+  <!-- BATCH BAR -->
+  <div class="batch-bar" id="batchBar">
+    <span class="batch-count" id="batchCount">0 selecionados</span>
+    <button class="batch-btn" onclick="batchDownload()">↓ Baixar selecionados</button>
+    <button class="batch-btn danger" onclick="batchDeleteConfirm()">✕ Excluir selecionados</button>
+    <button class="batch-cancel" onclick="clearSelection()">Cancelar</button>
   </div>
 
   <div class="gal-count" id="galCount"></div>
@@ -360,7 +398,10 @@ const S = {
   records:[],
   favs: new Set(JSON.parse(localStorage.getItem('bs_favs')||'[]')),
   sort: 'date',
-  favOnly: false
+  favOnly: false,
+  selected: new Set(),
+  selectMode: false,
+  currentView: 'grid'
 };
 
 // ─── NAVEGAÇÃO ───────────────────────────────────────────
@@ -397,7 +438,10 @@ function sync(){
   if(S.aURL) document.getElementById('pAfter').src  = S.aURL;
   const name = v('fName'), date = v('fDate'), proc = v('fProc');
   document.getElementById('pProc').textContent = proc || '—';
-  document.getElementById('pMeta').textContent = [name, date?fmtDate(date):''].filter(Boolean).join(' · ') || '—';
+  const dateStr = date ? fmtDate(date) : '';
+  document.getElementById('pMeta').textContent = [name, dateStr].filter(Boolean).join('  ·  ') || '—';
+  const pn = document.getElementById('pName');
+  if(pn) pn.textContent = '';
   const ready = S.bFile && S.aFile && name.trim() && date && proc.trim();
   document.getElementById('btnSave').disabled = !ready;
   document.getElementById('btnPrev').disabled = !(S.bURL && S.aURL);
@@ -533,20 +577,50 @@ function resetForm(){
 function dlCurrent(){
   renderDL(S.bURL, S.aURL, v('fProc')||document.getElementById('pProc').textContent, v('fName'), v('fDate'), v('fName')||'paciente');
 }
-async function dlComposite(url, name){
-  try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const burl = URL.createObjectURL(blob);
+async function dlComposite(url, patientName, proc, date){
+  // Carrega a imagem composta e adiciona legenda via canvas
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = ()=>{
+    const CAP = 100;
+    const W = img.width, H = img.height;
+    const cv = document.getElementById('canvas');
+    cv.width = W; cv.height = H + CAP;
+    const ctx = cv.getContext('2d');
+
+    // Imagem composta
+    ctx.drawImage(img, 0, 0, W, H);
+
+    // Legenda
+    ctx.fillStyle = '#FAF9F9';
+    ctx.fillRect(0, H, W, CAP);
+    ctx.fillStyle = '#E8E1DA';
+    ctx.fillRect(0, H, W, 1);
+
+    // Procedimento (serif grande)
+    ctx.fillStyle = '#3a2e28';
+    ctx.font = `300 ${Math.round(W*0.022)}px "Cormorant Garamond"`;
+    ctx.fillText(proc || '', 44, H + Math.round(CAP*0.52));
+
+    // Nome · Data (sans pequeno)
+    ctx.fillStyle = '#866D5B';
+    ctx.font = `400 ${Math.round(W*0.008)}px Montserrat`;
+    const meta = [patientName, date].filter(Boolean).join('  ·  ').toUpperCase();
+    ctx.fillText(meta, 44, H + Math.round(CAP*0.78));
+
+    // Marca direita
+    ctx.textAlign = 'right';
+    ctx.fillText('BELEZA SERENA  —  ESTÉTICA AVANÇADA', W - 44, H + Math.round(CAP*0.65));
+    ctx.textAlign = 'left';
+
+    // Download
     const a = document.createElement('a');
-    a.href = burl;
-    a.download = (name||'antes-depois').replace(/\s+/g,'-') + '.jpg';
+    a.download = (patientName||'antes-depois').replace(/\s+/g,'-') + '.png';
+    a.href = cv.toDataURL('image/png', 0.95);
     a.click();
-    setTimeout(()=>URL.revokeObjectURL(burl), 2000);
-  } catch(e){
-    // fallback: abre em nova aba
-    window.open(url,'_blank');
-  }
+  };
+  img.onerror = ()=>window.open(url,'_blank');
+  img.src = url;
 }
 
 function renderDL(bSrc,aSrc,proc,name,date,fname){
@@ -618,19 +692,59 @@ function renderG(recs){
   const c=document.getElementById('galCount');
   c.textContent=recs.length===0?'':recs.length===1?'1 registro':recs.length+' registros encontrados';
   if(!recs.length){ g.innerHTML='<div class="empty"><p>Nenhum resultado</p><span>Tente outros filtros</span></div>'; return; }
+
+  if(S.currentView==='table'){
+    g.classList.add('table-view'); g.classList.remove('list-view');
+    g.innerHTML=`<table class="tbl-wrap">
+      <thead><tr>
+        <th class="tbl-check"><input type="checkbox" id="chkAll" onchange="toggleSelectAll(this)" title="Selecionar tudo"></th>
+        <th style="width:80px">Imagem</th>
+        <th>Paciente</th>
+        <th>Procedimento</th>
+        <th>Data</th>
+        <th>Ações</th>
+      </tr></thead>
+      <tbody>${recs.map(r=>{
+        const img=r.composite_url||r.before_url||'';
+        const sel=S.selected.has(r.id);
+        return `<tr id="row-${r.id}" style="${sel?'background:var(--blush)':''}" >
+          <td><input type="checkbox" ${sel?'checked':''} onchange="toggleSelect('${r.id}',this)"></td>
+          <td><img class="tbl-thumb" src="${img}" onclick="openLightbox('${img}',${JSON.stringify(r.procedure_name)},${JSON.stringify(r.patient_name)},'${r.procedure_date?fmtDate(r.procedure_date):''}')" loading="lazy"></td>
+          <td>${esc(r.patient_name)}</td>
+          <td>${esc(r.procedure_name)}</td>
+          <td style="white-space:nowrap">${r.procedure_date?fmtDate(r.procedure_date):''}</td>
+          <td><div class="tbl-actions">
+            <button class="btn-dls" onclick="dlComposite('${img}',${JSON.stringify(r.patient_name)},${JSON.stringify(r.procedure_name)},'${r.procedure_date?fmtDate(r.procedure_date):''}')" >↓</button>
+            <button class="btn-del" onclick="confirmDelete('${r.id}','${img}')">✕</button>
+          </div></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+    return;
+  }
+
+  g.classList.remove('table-view');
+  if(S.currentView==='list') g.classList.add('list-view'); else g.classList.remove('list-view');
+
   g.innerHTML=recs.map(r=>{
     const fav=S.favs.has(r.id);
+    const sel=S.selected.has(r.id);
     const img=r.composite_url||r.before_url||'';
     return `
-    <div class="gal-card" id="card-${r.id}">
+    <div class="gal-card${sel?' selected':''}" id="card-${r.id}">
       <div class="gal-pair" style="position:relative">
         <img src="${img}" alt="Antes e Depois" loading="lazy"
-          onclick="openLightbox('${img}',${JSON.stringify(r.procedure_name)},${JSON.stringify(r.patient_name)},'${r.procedure_date?fmtDate(r.procedure_date):''}')"
-          style="width:100%;height:100%;object-fit:contain;background:#F5F2EF;cursor:zoom-in;display:block">
+          data-id="${r.id}"
+          data-proc="${esc(r.procedure_name)}"
+          data-name="${esc(r.patient_name)}"
+          data-date="${r.procedure_date?fmtDate(r.procedure_date):''}"
+          onclick="handleImgClick(this,'${img}')"
+          style="width:100%;height:100%;object-fit:contain;background:#F5F2EF;cursor:${S.selectMode?'pointer':'zoom-in'};display:block">
         <span class="img-tag tag-left" style="font-size:0.52rem;padding:0.28rem 0.65rem;pointer-events:none">Antes</span>
         <span class="img-tag tag-right" style="font-size:0.52rem;padding:0.28rem 0.65rem;pointer-events:none">Depois</span>
         <div style="position:absolute;top:0;left:50%;width:1px;height:100%;background:rgba(255,255,255,0.6);pointer-events:none"></div>
-        <button class="star-btn ${fav?'fav':''}" onclick="toggleFav('${r.id}',this)" title="${fav?'Remover favorito':'Favoritar'}">${fav?'★':'☆'}</button>
+        <div class="sel-check ${sel?'checked':''}" onclick="toggleSelect('${r.id}')" style="display:${S.selectMode?'flex':'none'}">${sel?'✓':''}</div>
+        <button class="star-btn ${fav?'fav':''}" onclick="toggleFav('${r.id}',this)" title="${fav?'Remover favorito':'Favoritar'}" style="display:${S.selectMode?'none':'flex'}">${fav?'★':'☆'}</button>
       </div>
       <div class="gal-foot">
         <div>
@@ -638,7 +752,7 @@ function renderG(recs){
           <div class="gal-meta">${esc(r.patient_name)} · ${r.procedure_date?fmtDate(r.procedure_date):''}</div>
         </div>
         <div style="display:flex;gap:0.5rem;align-items:center">
-          <button class="btn-dls" onclick="dlComposite('${img}',${JSON.stringify(r.patient_name)})">↓ Download</button>
+          <button class="btn-dls" onclick="dlComposite('${img}',${JSON.stringify(r.patient_name)},${JSON.stringify(r.procedure_name)},'${r.procedure_date?fmtDate(r.procedure_date):''}')" >↓ Download</button>
           <button class="btn-del" onclick="confirmDelete('${r.id}','${img}')">✕ Excluir</button>
         </div>
       </div>
@@ -700,8 +814,8 @@ function setSort(type, btn){
 function setView(type, btn){
   document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  const g=document.getElementById('galGrid');
-  g.classList.toggle('list-view', type==='list');
+  S.currentView=type;
+  filterG();
 }
 
 function toggleFavOnly(){
@@ -749,6 +863,132 @@ function confirmDelete(id, compositeUrl){
   document.body.appendChild(overlay);
   setTimeout(()=>{ const p=document.getElementById('adminPwd'); if(p) p.focus(); },50);
   overlay.addEventListener('keydown', e=>{ if(e.key==='Enter') doDelete(id,compositeUrl); if(e.key==='Escape') closeModal(); });
+}
+
+// ─── SELEÇÃO MÚLTIPLA ────────────────────────────────────
+function toggleSelectMode(){
+  S.selectMode=!S.selectMode;
+  S.selected.clear();
+  const btn=document.getElementById('selToggle');
+  btn.classList.toggle('active', S.selectMode);
+  btn.textContent=S.selectMode?'✓ Selecionar':'☐ Selecionar';
+  updateBatchBar();
+  filterG();
+}
+
+function toggleSelect(id, chk){
+  if(S.selected.has(id)){ S.selected.delete(id); if(chk) chk.checked=false; }
+  else { S.selected.add(id); if(chk) chk.checked=true; }
+  // Update card visual in grid/list view
+  const card=document.getElementById('card-'+id);
+  if(card){ card.classList.toggle('selected', S.selected.has(id)); }
+  updateBatchBar();
+  // Update chkAll state
+  const chkAll=document.getElementById('chkAll');
+  if(chkAll){
+    const total=document.querySelectorAll('.tbl-wrap tbody input[type=checkbox]').length;
+    chkAll.checked=S.selected.size===total && total>0;
+  }
+}
+
+function toggleSelectAll(chk){
+  const rows=document.querySelectorAll('.tbl-wrap tbody input[type=checkbox]');
+  rows.forEach(r=>{
+    const id=r.closest('tr').id.replace('row-','');
+    if(chk.checked) S.selected.add(id); else S.selected.delete(id);
+    r.checked=chk.checked;
+    const row=r.closest('tr');
+    if(row) row.style.background=chk.checked?'var(--blush)':'';
+  });
+  updateBatchBar();
+}
+
+function updateBatchBar(){
+  const bar=document.getElementById('batchBar');
+  const cnt=document.getElementById('batchCount');
+  const n=S.selected.size;
+  bar.classList.toggle('show', n>0);
+  cnt.textContent=n===1?'1 selecionado':n+' selecionados';
+}
+
+function clearSelection(){
+  S.selected.clear();
+  S.selectMode=false;
+  const btn=document.getElementById('selToggle');
+  if(btn){ btn.classList.remove('active'); btn.textContent='☐ Selecionar'; }
+  updateBatchBar();
+  filterG();
+}
+
+async function batchDownload(){
+  if(!S.selected.size) return;
+  toast('Baixando '+S.selected.size+' arquivo(s)…','ok');
+  for(const id of S.selected){
+    const r=S.records.find(x=>x.id===id);
+    if(!r) continue;
+    const img=r.composite_url||r.before_url||'';
+    await dlComposite(img, r.patient_name, r.procedure_name, r.procedure_date?fmtDate(r.procedure_date):'');
+    await new Promise(res=>setTimeout(res,800));
+  }
+}
+
+function batchDeleteConfirm(){
+  if(!S.selected.size) return;
+  const n=S.selected.size;
+  const overlay=document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.id='adminModal';
+  overlay.innerHTML=`
+    <div class="modal-box">
+      <div class="modal-title">Excluir ${n} registro${n>1?'s':''}</div>
+      <div class="modal-sub">Confirme a senha de administrador</div>
+      <div class="modal-field">
+        <label>Senha</label>
+        <input type="password" id="adminPwd" placeholder="••••••••" autocomplete="off">
+      </div>
+      <div id="modalErr" style="font-size:0.7rem;color:#8B2E2E;margin-bottom:1rem;display:none">Senha incorreta</div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="modal-confirm" onclick="doBatchDelete()">Excluir ${n} registro${n>1?'s':''}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(()=>{ const p=document.getElementById('adminPwd'); if(p) p.focus(); },50);
+  overlay.addEventListener('keydown',e=>{ if(e.key==='Enter') doBatchDelete(); if(e.key==='Escape') closeModal(); });
+}
+
+async function doBatchDelete(){
+  const pwd=(document.getElementById('adminPwd')||{}).value||'';
+  if(pwd!==ADMIN_HASH){
+    const err=document.getElementById('modalErr');
+    if(err) err.style.display='block';
+    const p=document.getElementById('adminPwd');
+    if(p){ p.value=''; p.focus(); }
+    return;
+  }
+  closeModal();
+  const ids=[...S.selected];
+  try{
+    const {error}=await sb.from('registros').delete().in('id',ids);
+    if(error) throw error;
+    S.records=S.records.filter(r=>!ids.includes(r.id));
+    ids.forEach(id=>S.favs.delete(id));
+    localStorage.setItem('bs_favs',JSON.stringify([...S.favs]));
+    clearSelection();
+    toast(ids.length+' registro(s) excluído(s)','ok');
+  }catch(e){
+    console.error(e);
+    toast('Erro ao excluir — tente novamente','err');
+  }
+}
+
+function handleImgClick(el, url){
+  const id = el.getAttribute('data-id');
+  if(S.selectMode){ toggleSelect(id); return; }
+  const proc = el.getAttribute('data-proc');
+  const name = el.getAttribute('data-name');
+  const date = el.getAttribute('data-date');
+  openLightbox(url, proc, name, date);
 }
 
 function openLightbox(url, proc, name, date){
