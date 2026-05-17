@@ -94,10 +94,10 @@ section.active{display:block}
 .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:1.5rem}
 .gal-card{background:white;border:1px solid var(--blush);border-radius:4px;overflow:hidden;transition:box-shadow 0.2s}
 .gal-card:hover{box-shadow:0 4px 20px rgba(134,109,91,0.1)}
-.gal-pair{display:grid;grid-template-columns:1fr 1px 1fr;height:250px}
-.gal-side{overflow:hidden;position:relative}
-.gal-side img{width:100%;height:100%;object-fit:cover}
-.gal-divider{background:white;box-shadow:0 0 0 0.75px var(--sand)}
+.gal-pair{position:relative;height:320px;overflow:hidden;background:#F5F2EF}
+.gal-side{overflow:hidden;position:relative;width:100%;height:100%}
+.gal-side img{width:100%;height:100%;object-fit:contain;background:#f5f2ef}
+.gal-divider{display:none}
 .gal-foot{padding:1rem 1.25rem;border-top:1px solid var(--blush);display:flex;align-items:center;justify-content:space-between;gap:1rem}
 .gal-proc{font-family:var(--serif);font-size:0.95rem;font-weight:400;color:var(--dark);letter-spacing:0.02em;margin-bottom:0.15rem}
 .gal-meta{font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown)}
@@ -130,6 +130,15 @@ section.active{display:block}
 /* GALERIA LISTA */
 .gal-grid.list-view{grid-template-columns:1fr}
 .gal-grid.list-view .gal-pair{height:180px}
+
+/* LIGHTBOX */
+.lb-overlay{position:fixed;inset:0;background:rgba(30,20,16,0.92);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;cursor:zoom-out}
+.lb-img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:2px;box-shadow:0 8px 48px rgba(0,0,0,0.4)}
+.lb-caption{margin-top:1.25rem;text-align:center}
+.lb-proc{font-family:var(--serif);font-size:1.2rem;font-weight:300;color:#FAF9F9;letter-spacing:0.02em;margin-bottom:0.3rem}
+.lb-meta{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--sand)}
+.lb-close{position:absolute;top:1.25rem;right:1.5rem;background:none;border:1px solid rgba(255,255,255,0.3);color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.lb-close:hover{background:rgba(255,255,255,0.1)}
 
 /* TOAST */
 .toast{position:fixed;bottom:2rem;right:2rem;padding:1rem 1.5rem;border-radius:2px;font-size:0.73rem;letter-spacing:0.08em;font-family:var(--sans);font-weight:500;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;z-index:9999}
@@ -415,12 +424,19 @@ function buildComposite(bSrc, aSrc, proc, name, date){
     const ctx=cv.getContext('2d');
     const iB=new Image(), iA=new Image();
     let n=0;
+    // crossOrigin só para URLs remotas
+    if(!bSrc.startsWith('blob:')) iB.crossOrigin='anonymous';
+    if(!aSrc.startsWith('blob:')) iA.crossOrigin='anonymous';
     function draw(){
       ctx.fillStyle='#FAF9F9'; ctx.fillRect(0,0,W,H+CAP);
       [[iB,0],[iA,W/2]].forEach(([img,x])=>{
         ctx.save(); ctx.beginPath(); ctx.rect(x,0,W/2,H); ctx.clip();
-        const r=Math.max((W/2)/img.width,H/img.height);
+        // contain: mostrar foto inteira sem corte
+        const r=Math.min((W/2)/img.width,H/img.height);
         const sw=img.width*r,sh=img.height*r;
+        // fundo neutro para a metade
+        ctx.fillStyle='#F5F2EF';
+        ctx.fillRect(x,0,W/2,H);
         ctx.drawImage(img,x+(W/2-sw)/2,(H-sh)/2,sw,sh);
         ctx.restore();
       });
@@ -517,10 +533,20 @@ function resetForm(){
 function dlCurrent(){
   renderDL(S.bURL, S.aURL, v('fProc')||document.getElementById('pProc').textContent, v('fName'), v('fDate'), v('fName')||'paciente');
 }
-function dlComposite(url, name){
-  const a=document.createElement('a');
-  a.href=url; a.download=(name||'antes-depois').replace(/\s+/g,'-')+'.jpg';
-  a.target='_blank'; a.click();
+async function dlComposite(url, name){
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const burl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = burl;
+    a.download = (name||'antes-depois').replace(/\s+/g,'-') + '.jpg';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(burl), 2000);
+  } catch(e){
+    // fallback: abre em nova aba
+    window.open(url,'_blank');
+  }
 }
 
 function renderDL(bSrc,aSrc,proc,name,date,fname){
@@ -598,12 +624,12 @@ function renderG(recs){
     return `
     <div class="gal-card" id="card-${r.id}">
       <div class="gal-pair" style="position:relative">
-        <div style="position:relative;overflow:hidden;width:100%;height:100%">
-          <img src="${img}" alt="Antes e Depois" loading="lazy" style="width:100%;height:100%;object-fit:cover">
-          <span class="img-tag tag-left" style="font-size:0.52rem;padding:0.28rem 0.65rem">Antes</span>
-          <span class="img-tag tag-right" style="font-size:0.52rem;padding:0.28rem 0.65rem">Depois</span>
-          <div style="position:absolute;top:0;left:50%;width:1px;height:100%;background:rgba(255,255,255,0.7)"></div>
-        </div>
+        <img src="${img}" alt="Antes e Depois" loading="lazy"
+          onclick="openLightbox('${img}',${JSON.stringify(r.procedure_name)},${JSON.stringify(r.patient_name)},'${r.procedure_date?fmtDate(r.procedure_date):''}')"
+          style="width:100%;height:100%;object-fit:contain;background:#F5F2EF;cursor:zoom-in;display:block">
+        <span class="img-tag tag-left" style="font-size:0.52rem;padding:0.28rem 0.65rem;pointer-events:none">Antes</span>
+        <span class="img-tag tag-right" style="font-size:0.52rem;padding:0.28rem 0.65rem;pointer-events:none">Depois</span>
+        <div style="position:absolute;top:0;left:50%;width:1px;height:100%;background:rgba(255,255,255,0.6);pointer-events:none"></div>
         <button class="star-btn ${fav?'fav':''}" onclick="toggleFav('${r.id}',this)" title="${fav?'Remover favorito':'Favoritar'}">${fav?'★':'☆'}</button>
       </div>
       <div class="gal-foot">
@@ -724,6 +750,31 @@ function confirmDelete(id, compositeUrl){
   setTimeout(()=>{ const p=document.getElementById('adminPwd'); if(p) p.focus(); },50);
   overlay.addEventListener('keydown', e=>{ if(e.key==='Enter') doDelete(id,compositeUrl); if(e.key==='Escape') closeModal(); });
 }
+
+function openLightbox(url, proc, name, date){
+  const ov = document.createElement('div');
+  ov.className = 'lb-overlay';
+  ov.id = 'lightbox';
+  ov.innerHTML = `
+    <button class="lb-close" onclick="closeLightbox()" title="Fechar">✕</button>
+    <img class="lb-img" src="${url}" alt="Antes e Depois">
+    <div class="lb-caption">
+      <div class="lb-proc">${esc(proc)}</div>
+      <div class="lb-meta">${esc(name)}${date?' · '+date:''}</div>
+    </div>
+  `;
+  ov.addEventListener('click', e=>{ if(e.target===ov) closeLightbox(); });
+  document.body.appendChild(ov);
+  document.addEventListener('keydown', lbKey);
+}
+
+function closeLightbox(){
+  const lb=document.getElementById('lightbox');
+  if(lb) lb.remove();
+  document.removeEventListener('keydown', lbKey);
+}
+
+function lbKey(e){ if(e.key==='Escape') closeLightbox(); }
 
 function closeModal(){
   const m=document.getElementById('adminModal');
