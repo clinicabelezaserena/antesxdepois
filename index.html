@@ -198,20 +198,20 @@ section.active{display:block}
 
 /* AJUSTES DE IMAGEM */
 .adj-panel{padding:1.25rem 1.5rem;border-top:1px solid var(--blush);background:var(--cream)}
-.adj-row{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
-.adj-side-label{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown);font-weight:500;min-width:36px}
-.adj-controls{display:flex;gap:1.25rem;flex-wrap:wrap;flex:1}
-.adj-item{display:flex;flex-direction:column;gap:0.25rem;min-width:100px}
-.adj-item label{font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown);opacity:0.7}
-.adj-item input[type=range]{width:100%;height:2px;accent-color:var(--brown)}
-.adj-item span{font-size:0.6rem;color:var(--brown);text-align:center}
-.adj-reset{background:none;border:1px solid var(--sand);color:var(--brown);padding:0.35rem 0.85rem;font-family:var(--sans);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;white-space:nowrap}
-.adj-reset:hover{border-color:var(--brown)}
-.adj-divider{height:1px;background:var(--blush);margin:1rem 0}
-.adj-pair{display:flex;align-items:center;gap:0.4rem}
-.adj-pair input[type=range]{flex:1}
-.adj-num{width:52px;border:1px solid var(--sand);border-radius:2px;padding:0.2rem 0.35rem;font-family:var(--sans);font-size:0.68rem;color:var(--dark);background:white;text-align:center;outline:none}
+.adj-row{display:grid;grid-template-columns:42px 1fr auto;gap:1rem;align-items:center}
+.adj-side-label{font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--brown);font-weight:500}
+.adj-controls{display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem}
+.adj-item{display:flex;flex-direction:column;gap:0.3rem;min-width:0}
+.adj-item label{font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown);opacity:0.7;white-space:nowrap}
+.adj-pair{display:flex;align-items:center;gap:0.3rem;min-width:0}
+.adj-pair input[type=range]{flex:1;min-width:0;height:2px;accent-color:var(--brown)}
+.adj-num{width:46px;flex-shrink:0;border:1px solid var(--sand);border-radius:2px;padding:0.18rem 0.3rem;font-family:var(--sans);font-size:0.65rem;color:var(--dark);background:white;text-align:center;outline:none;-moz-appearance:textfield}
+.adj-num::-webkit-outer-spin-button,.adj-num::-webkit-inner-spin-button{-webkit-appearance:none}
 .adj-num:focus{border-color:var(--brown)}
+.adj-unit{font-size:0.6rem;color:var(--brown);opacity:0.7;white-space:nowrap;flex-shrink:0}
+.adj-reset{background:none;border:1px solid var(--sand);color:var(--brown);padding:0.35rem 0.85rem;font-family:var(--sans);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;white-space:nowrap;align-self:center}
+.adj-reset:hover{border-color:var(--brown);background:var(--blush)}
+.adj-divider{height:1px;background:var(--blush);margin:0.85rem 0}
 
 canvas{display:none}
 
@@ -333,35 +333,35 @@ const CLOUDINARY_PRESET= 'beleza_serena';
             <label>Zoom</label>
             <div class="adj-pair">
               <input type="range" min="80" max="200" value="100" id="adjBZoom" oninput="syncAdj('B','Zoom',this.value)">
-              <input type="number" min="80" max="200" value="100" id="adjBZoomN" oninput="syncAdj('B','Zoom',this.value)" class="adj-num">
+              <input type="number" min="80" max="200" value="100" id="adjBZoomN" oninput="syncAdj('B','Zoom',this.value)" class="adj-num"><span class="adj-unit">%</span>
             </div>
           </div>
           <div class="adj-item">
             <label>Brilho</label>
             <div class="adj-pair">
               <input type="range" min="50" max="150" value="100" id="adjBBright" oninput="syncAdj('B','Bright',this.value)">
-              <input type="number" min="50" max="150" value="100" id="adjBBrightN" oninput="syncAdj('B','Bright',this.value)" class="adj-num">
+              <input type="number" min="50" max="150" value="100" id="adjBBrightN" oninput="syncAdj('B','Bright',this.value)" class="adj-num"><span class="adj-unit">%</span>
             </div>
           </div>
           <div class="adj-item">
             <label>Contraste</label>
             <div class="adj-pair">
               <input type="range" min="50" max="150" value="100" id="adjBContrast" oninput="syncAdj('B','Contrast',this.value)">
-              <input type="number" min="50" max="150" value="100" id="adjBContrastN" oninput="syncAdj('B','Contrast',this.value)" class="adj-num">
+              <input type="number" min="50" max="150" value="100" id="adjBContrastN" oninput="syncAdj('B','Contrast',this.value)" class="adj-num"><span class="adj-unit">%</span>
             </div>
           </div>
           <div class="adj-item">
             <label>Horizontal</label>
             <div class="adj-pair">
               <input type="range" min="-200" max="200" value="0" id="adjBX" oninput="syncAdj('B','X',this.value)">
-              <input type="number" min="-200" max="200" value="0" id="adjBXN" oninput="syncAdj('B','X',this.value)" class="adj-num">
+              <input type="number" min="-200" max="200" value="0" id="adjBXN" oninput="syncAdj('B','X',this.value)" class="adj-num"><span class="adj-unit">px</span>
             </div>
           </div>
           <div class="adj-item">
             <label>Vertical</label>
             <div class="adj-pair">
               <input type="range" min="-200" max="200" value="0" id="adjBY" oninput="syncAdj('B','Y',this.value)">
-              <input type="number" min="-200" max="200" value="0" id="adjBYN" oninput="syncAdj('B','Y',this.value)" class="adj-num">
+              <input type="number" min="-200" max="200" value="0" id="adjBYN" oninput="syncAdj('B','Y',this.value)" class="adj-num"><span class="adj-unit">px</span>
             </div>
           </div>
         </div>
@@ -375,35 +375,35 @@ const CLOUDINARY_PRESET= 'beleza_serena';
             <label>Zoom</label>
             <div class="adj-pair">
               <input type="range" min="80" max="200" value="100" id="adjAZoom" oninput="syncAdj('A','Zoom',this.value)">
-              <input type="number" min="80" max="200" value="100" id="adjAZoomN" oninput="syncAdj('A','Zoom',this.value)" class="adj-num">
+              <input type="number" min="80" max="200" value="100" id="adjAZoomN" oninput="syncAdj('A','Zoom',this.value)" class="adj-num"><span class="adj-unit">%</span>
             </div>
           </div>
           <div class="adj-item">
             <label>Brilho</label>
             <div class="adj-pair">
               <input type="range" min="50" max="150" value="100" id="adjABright" oninput="syncAdj('A','Bright',this.value)">
-              <input type="number" min="50" max="150" value="100" id="adjABrightN" oninput="syncAdj('A','Bright',this.value)" class="adj-num">
+              <input type="number" min="50" max="150" value="100" id="adjABrightN" oninput="syncAdj('A','Bright',this.value)" class="adj-num"><span class="adj-unit">%</span>
             </div>
           </div>
           <div class="adj-item">
             <label>Contraste</label>
             <div class="adj-pair">
               <input type="range" min="50" max="150" value="100" id="adjAContrast" oninput="syncAdj('A','Contrast',this.value)">
-              <input type="number" min="50" max="150" value="100" id="adjAContrastN" oninput="syncAdj('A','Contrast',this.value)" class="adj-num">
+              <input type="number" min="50" max="150" value="100" id="adjAContrastN" oninput="syncAdj('A','Contrast',this.value)" class="adj-num"><span class="adj-unit">%</span>
             </div>
           </div>
           <div class="adj-item">
             <label>Horizontal</label>
             <div class="adj-pair">
               <input type="range" min="-200" max="200" value="0" id="adjAX" oninput="syncAdj('A','X',this.value)">
-              <input type="number" min="-200" max="200" value="0" id="adjAXN" oninput="syncAdj('A','X',this.value)" class="adj-num">
+              <input type="number" min="-200" max="200" value="0" id="adjAXN" oninput="syncAdj('A','X',this.value)" class="adj-num"><span class="adj-unit">px</span>
             </div>
           </div>
           <div class="adj-item">
             <label>Vertical</label>
             <div class="adj-pair">
               <input type="range" min="-200" max="200" value="0" id="adjAY" oninput="syncAdj('A','Y',this.value)">
-              <input type="number" min="-200" max="200" value="0" id="adjAYN" oninput="syncAdj('A','Y',this.value)" class="adj-num">
+              <input type="number" min="-200" max="200" value="0" id="adjAYN" oninput="syncAdj('A','Y',this.value)" class="adj-num"><span class="adj-unit">px</span>
             </div>
           </div>
         </div>
@@ -520,6 +520,8 @@ function go(id, btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(btn) btn.classList.add('active');
+  // Atualizar prévia ao navegar para s2
+  if(id==='s2') sync();
 }
 
 // ─── FILE PICK ───────────────────────────────────────────
@@ -627,29 +629,23 @@ async function saveWithAdj(){
   }
 
   const btn = document.getElementById('btnSaveAdj');
-  const prog = document.getElementById('prog');
-  const fill = document.getElementById('progFill');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin" style="border-top-color:white"></span> &nbsp;Salvando…';
-  prog.style.display = 'block';
-  fill.style.width = '15%';
+  btn.innerHTML = '<span class="spin" style="border-top-color:white;border-color:rgba(255,255,255,0.3)"></span> &nbsp;Salvando…';
 
   try {
     const ts   = Date.now();
     const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
 
     // Usar buildDownloadCanvas com ajustes aplicados (inclui legenda)
-    fill.style.width = '35%';
+    toast('Montando imagem…','ok');
     const cv = await buildDownloadCanvas(S.bURL, S.aURL, proc, name, date?fmtDate(date):'', getAdj('B'), getAdj('A'));
-    fill.style.width = '55%';
 
     // Converter canvas para blob
     const blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', 0.92));
-    fill.style.width = '70%';
+    toast('Enviando para a nuvem…','ok');
 
     // Upload para Cloudinary
     const compositeURL = await upCloud(blob, `${slug}-adj-${ts}`);
-    fill.style.width = '88%';
 
     // Salvar no Supabase
     const {error} = await sb.from('registros').insert([{
@@ -661,21 +657,15 @@ async function saveWithAdj(){
     }]);
     if(error) throw error;
 
-    fill.style.width = '100%';
     toast('Salvo na galeria com ajustes ✓','ok');
-    setTimeout(()=>{
-      prog.style.display='none';
-      fill.style.width='0%';
-      btn.disabled = false;
-      btn.innerHTML = '↑ &nbsp;Salvar na galeria';
-    }, 900);
+    btn.disabled = false;
+    btn.innerHTML = '↑ &nbsp;Salvar na galeria';
 
   } catch(e){
     console.error(e);
     toast('Erro ao salvar — verifique as configurações','err');
     btn.disabled = false;
     btn.innerHTML = '↑ &nbsp;Salvar na galeria';
-    prog.style.display = 'none';
   }
 }
 
