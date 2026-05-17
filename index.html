@@ -196,6 +196,19 @@ section.active{display:block}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:rot 0.7s linear infinite;vertical-align:middle}
 @keyframes rot{to{transform:rotate(360deg)}}
 
+/* AJUSTES DE IMAGEM */
+.adj-panel{padding:1.25rem 1.5rem;border-top:1px solid var(--blush);background:var(--cream)}
+.adj-row{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
+.adj-side-label{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown);font-weight:500;min-width:36px}
+.adj-controls{display:flex;gap:1.25rem;flex-wrap:wrap;flex:1}
+.adj-item{display:flex;flex-direction:column;gap:0.25rem;min-width:100px}
+.adj-item label{font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--brown);opacity:0.7}
+.adj-item input[type=range]{width:100%;height:2px;accent-color:var(--brown)}
+.adj-item span{font-size:0.6rem;color:var(--brown);text-align:center}
+.adj-reset{background:none;border:1px solid var(--sand);color:var(--brown);padding:0.35rem 0.85rem;font-family:var(--sans);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;white-space:nowrap}
+.adj-reset:hover{border-color:var(--brown)}
+.adj-divider{height:1px;background:var(--blush);margin:1rem 0}
+
 canvas{display:none}
 
 @media(max-width:768px){
@@ -295,22 +308,81 @@ const CLOUDINARY_PRESET= 'beleza_serena';
   <p class="section-sub">Visualize antes de salvar</p>
 
   <div class="preview-card">
-    <div class="ba-wrap">
-      <div class="ba-side">
-        <img id="pBefore" src="" alt="Antes">
+    <div class="ba-wrap" id="baWrap">
+      <div class="ba-side" id="sideB" style="overflow:hidden">
+        <img id="pBefore" src="" alt="Antes" style="width:100%;height:100%;object-fit:contain;background:#F5F2EF;transform-origin:center center;transition:transform 0.15s">
         <span class="img-tag tag-left">Antes</span>
       </div>
       <div class="ba-divider"></div>
-      <div class="ba-side">
-        <img id="pAfter" src="" alt="Depois">
+      <div class="ba-side" id="sideA" style="overflow:hidden">
+        <img id="pAfter" src="" alt="Depois" style="width:100%;height:100%;object-fit:contain;background:#F5F2EF;transform-origin:center center;transition:transform 0.15s">
         <span class="img-tag tag-right">Depois</span>
       </div>
     </div>
+
+    <!-- PAINEL DE AJUSTES -->
+    <div class="adj-panel">
+      <div class="adj-row">
+        <div class="adj-side-label">Antes</div>
+        <div class="adj-controls">
+          <div class="adj-item">
+            <label>Zoom</label>
+            <input type="range" min="80" max="200" value="100" id="adjBZoom" oninput="applyAdj('B')">
+            <span id="adjBZoomVal">100%</span>
+          </div>
+          <div class="adj-item">
+            <label>Brilho</label>
+            <input type="range" min="50" max="150" value="100" id="adjBBright" oninput="applyAdj('B')">
+          </div>
+          <div class="adj-item">
+            <label>Contraste</label>
+            <input type="range" min="50" max="150" value="100" id="adjBContrast" oninput="applyAdj('B')">
+          </div>
+          <div class="adj-item">
+            <label>Horizontal</label>
+            <input type="range" min="-200" max="200" value="0" id="adjBX" oninput="applyAdj('B')">
+          </div>
+          <div class="adj-item">
+            <label>Vertical</label>
+            <input type="range" min="-200" max="200" value="0" id="adjBY" oninput="applyAdj('B')">
+          </div>
+        </div>
+        <button class="adj-reset" onclick="resetAdj('B')">↺ Resetar</button>
+      </div>
+      <div class="adj-divider"></div>
+      <div class="adj-row">
+        <div class="adj-side-label">Depois</div>
+        <div class="adj-controls">
+          <div class="adj-item">
+            <label>Zoom</label>
+            <input type="range" min="80" max="200" value="100" id="adjAZoom" oninput="applyAdj('A')">
+            <span id="adjAZoomVal">100%</span>
+          </div>
+          <div class="adj-item">
+            <label>Brilho</label>
+            <input type="range" min="50" max="150" value="100" id="adjABright" oninput="applyAdj('A')">
+          </div>
+          <div class="adj-item">
+            <label>Contraste</label>
+            <input type="range" min="50" max="150" value="100" id="adjAContrast" oninput="applyAdj('A')">
+          </div>
+          <div class="adj-item">
+            <label>Horizontal</label>
+            <input type="range" min="-200" max="200" value="0" id="adjAX" oninput="applyAdj('A')">
+          </div>
+          <div class="adj-item">
+            <label>Vertical</label>
+            <input type="range" min="-200" max="200" value="0" id="adjAY" oninput="applyAdj('A')">
+          </div>
+        </div>
+        <button class="adj-reset" onclick="resetAdj('A')">↺ Resetar</button>
+      </div>
+    </div>
+
     <div class="preview-foot">
       <div class="cap-info">
         <div class="cap-proc" id="pProc">—</div>
         <div class="cap-meta" id="pMeta">—</div>
-        <div class="cap-name" id="pName" style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--sand);margin-top:0.15rem"></div>
       </div>
       <button class="btn-dl" onclick="dlCurrent()">↓ &nbsp;Download</button>
     </div>
@@ -573,104 +645,164 @@ function resetForm(){
   sync();
 }
 
+// ─── AJUSTES DE IMAGEM ───────────────────────────────────
+function applyAdj(side){
+  const pfx = side==='B' ? 'adjB' : 'adjA';
+  const imgEl = document.getElementById(side==='B'?'pBefore':'pAfter');
+  if(!imgEl) return;
+  const zoom    = document.getElementById(pfx+'Zoom').value;
+  const bright  = document.getElementById(pfx+'Bright').value;
+  const contrast= document.getElementById(pfx+'Contrast').value;
+  const tx      = document.getElementById(pfx+'X').value;
+  const ty      = document.getElementById(pfx+'Y').value;
+  const zv = document.getElementById(pfx+'ZoomVal');
+  if(zv) zv.textContent = zoom+'%';
+  imgEl.style.transform = `scale(${zoom/100}) translate(${tx}px,${ty}px)`;
+  imgEl.style.filter    = `brightness(${bright}%) contrast(${contrast}%)`;
+}
+
+function resetAdj(side){
+  const pfx = side==='B' ? 'adjB' : 'adjA';
+  ['Zoom','Bright','Contrast'].forEach(k=>{
+    const el=document.getElementById(pfx+k);
+    if(el) el.value=100;
+  });
+  ['X','Y'].forEach(k=>{
+    const el=document.getElementById(pfx+k);
+    if(el) el.value=0;
+  });
+  const zv=document.getElementById(pfx+'ZoomVal');
+  if(zv) zv.textContent='100%';
+  applyAdj(side);
+}
+
 // ─── DOWNLOAD CANVAS ─────────────────────────────────────
-function dlCurrent(){
-  renderDL(S.bURL, S.aURL, v('fProc')||document.getElementById('pProc').textContent, v('fName'), v('fDate'), v('fName')||'paciente');
-}
-async function dlComposite(url, patientName, proc, date){
-  // Carrega a imagem composta e adiciona legenda via canvas
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = ()=>{
-    const CAP = 100;
-    const W = img.width, H = img.height;
-    const cv = document.getElementById('canvas');
-    cv.width = W; cv.height = H + CAP;
+// Função única que renderiza imagem composta com legenda
+function buildDownloadCanvas(bSrc, aSrc, proc, name, date, adjB, adjA){
+  return new Promise((resolve)=>{
+    const W=1600, H=900, CAP=100;
+    const cv = document.createElement('canvas');
+    cv.width=W; cv.height=H+CAP;
     const ctx = cv.getContext('2d');
+    const iB=new Image(), iA=new Image();
+    if(!bSrc.startsWith('blob:')) iB.crossOrigin='anonymous';
+    if(!aSrc.startsWith('blob:')) iA.crossOrigin='anonymous';
+    let n=0;
 
-    // Imagem composta
-    ctx.drawImage(img, 0, 0, W, H);
-
-    // Legenda
-    ctx.fillStyle = '#FAF9F9';
-    ctx.fillRect(0, H, W, CAP);
-    ctx.fillStyle = '#E8E1DA';
-    ctx.fillRect(0, H, W, 1);
-
-    // Procedimento (serif grande)
-    ctx.fillStyle = '#3a2e28';
-    ctx.font = `300 ${Math.round(W*0.022)}px "Cormorant Garamond"`;
-    ctx.fillText(proc || '', 44, H + Math.round(CAP*0.52));
-
-    // Nome · Data (sans pequeno)
-    ctx.fillStyle = '#866D5B';
-    ctx.font = `400 ${Math.round(W*0.008)}px Montserrat`;
-    const meta = [patientName, date].filter(Boolean).join('  ·  ').toUpperCase();
-    ctx.fillText(meta, 44, H + Math.round(CAP*0.78));
-
-    // Marca direita
-    ctx.textAlign = 'right';
-    ctx.fillText('BELEZA SERENA  —  ESTÉTICA AVANÇADA', W - 44, H + Math.round(CAP*0.65));
-    ctx.textAlign = 'left';
-
-    // Download
-    const a = document.createElement('a');
-    a.download = (patientName||'antes-depois').replace(/\s+/g,'-') + '.png';
-    a.href = cv.toDataURL('image/png', 0.95);
-    a.click();
-  };
-  img.onerror = ()=>window.open(url,'_blank');
-  img.src = url;
-}
-
-function renderDL(bSrc,aSrc,proc,name,date,fname){
-  const W=1600,H=900,CAP=88;
-  const cv=document.getElementById('canvas');
-  cv.width=W; cv.height=H+CAP;
-  const ctx=cv.getContext('2d');
-  const iB=new Image(), iA=new Image();
-  iB.crossOrigin=iA.crossOrigin='anonymous';
-  let n=0;
-
-  function draw(){
-    ctx.fillStyle='#FAF9F9'; ctx.fillRect(0,0,W,H+CAP);
-    [['#FAF9F9',iB,0],[null,iA,W/2]].forEach(([bg,img,x])=>{
-      ctx.save(); ctx.beginPath(); ctx.rect(x,0,W/2,H); ctx.clip();
-      const r=Math.max((W/2)/img.width,H/img.height);
-      const sw=img.width*r,sh=img.height*r;
-      ctx.drawImage(img,x+(W/2-sw)/2,(H-sh)/2,sw,sh);
+    function drawSide(img, x, adj){
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x,0,W/2,H); ctx.clip();
+      ctx.fillStyle='#F5F2EF'; ctx.fillRect(x,0,W/2,H);
+      // apply brightness/contrast
+      if(adj) ctx.filter=`brightness(${adj.bright}%) contrast(${adj.contrast}%)`;
+      const zoom = adj ? adj.zoom/100 : 1;
+      const r = Math.min((W/2)/img.width, H/img.height) * zoom;
+      const sw=img.width*r, sh=img.height*r;
+      const ox = adj ? adj.tx*zoom : 0;
+      const oy = adj ? adj.ty*zoom : 0;
+      ctx.drawImage(img, x+(W/2-sw)/2+ox, (H-sh)/2+oy, sw, sh);
+      ctx.filter='none';
       ctx.restore();
-    });
-    ctx.fillStyle='#FAF9F9'; ctx.fillRect(W/2-1,0,2,H);
-    lbl(ctx,'ANTES',40,H-44);
-    lbl(ctx,'DEPOIS',W/2+20,H-44);
-    ctx.fillStyle='#FAF9F9'; ctx.fillRect(0,H,W,CAP);
-    ctx.fillStyle='#E8E1DA'; ctx.fillRect(0,H,W,1);
-    ctx.fillStyle='#3a2e28';
-    ctx.font='300 30px "Cormorant Garamond"';
-    ctx.fillText(proc||'',44,H+52);
-    ctx.fillStyle='#866D5B';
-    ctx.font='400 11px Montserrat';
-    ctx.fillText(([name,date?fmtDate(date):''].filter(Boolean).join('  ·  ')).toUpperCase(),44,H+73);
-    ctx.textAlign='right';
-    ctx.fillText('BELEZA SERENA  —  ESTÉTICA AVANÇADA',W-44,H+65);
-    ctx.textAlign='left';
-    const a=document.createElement('a');
-    a.download=(fname||'antes-depois').replace(/\s+/g,'-')+'.png';
-    a.href=cv.toDataURL('image/png',0.95);
-    a.click();
-  }
+    }
 
-  function lbl(ctx,t,x,y){
-    ctx.font='500 11px Montserrat';
-    const m=ctx.measureText(t);
-    ctx.fillStyle='rgba(255,255,255,0.88)'; ctx.fillRect(x-8,y-13,m.width+16,22);
-    ctx.fillStyle='#866D5B'; ctx.fillText(t,x,y+5);
-  }
+    function draw(){
+      ctx.fillStyle='#FAF9F9'; ctx.fillRect(0,0,W,H+CAP);
+      drawSide(iB, 0,   adjB);
+      drawSide(iA, W/2, adjA);
+      // Divider
+      ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.fillRect(W/2-1,0,2,H);
+      // Labels ANTES / DEPOIS
+      function lbl(t,x,y){
+        ctx.font='500 13px Montserrat';
+        const m=ctx.measureText(t);
+        ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fillRect(x-10,y-15,m.width+20,24);
+        ctx.fillStyle='#866D5B'; ctx.fillText(t,x,y+5);
+      }
+      lbl('ANTES',44,H-50); lbl('DEPOIS',W/2+24,H-50);
+      // Caption bar
+      ctx.fillStyle='#FAF9F9'; ctx.fillRect(0,H,W,CAP);
+      ctx.fillStyle='#E8E1DA'; ctx.fillRect(0,H,W,1);
+      // Procedimento
+      ctx.fillStyle='#3a2e28';
+      ctx.font='300 32px "Cormorant Garamond"';
+      ctx.fillText(proc||'', 48, H+52);
+      // Nome · Data
+      ctx.fillStyle='#866D5B';
+      ctx.font='400 12px Montserrat';
+      const meta=[name,date].filter(Boolean).join('  ·  ').toUpperCase();
+      ctx.fillText(meta, 48, H+76);
+      // Marca
+      ctx.textAlign='right';
+      ctx.fillText('BELEZA SERENA  —  ESTÉTICA AVANÇADA', W-48, H+64);
+      ctx.textAlign='left';
+      resolve(cv);
+    }
 
-  iB.onload=iA.onload=()=>{ if(++n===2) draw(); };
-  iB.src=bSrc; iA.src=aSrc;
+    iB.onload=iA.onload=()=>{ if(++n===2) draw(); };
+    iB.src=bSrc; iA.src=aSrc;
+  });
 }
+
+function getAdj(side){
+  const pfx = side==='B'?'adjB':'adjA';
+  const z=document.getElementById(pfx+'Zoom');
+  if(!z) return null;
+  return {
+    zoom:    +document.getElementById(pfx+'Zoom').value,
+    bright:  +document.getElementById(pfx+'Bright').value,
+    contrast:+document.getElementById(pfx+'Contrast').value,
+    tx:      +document.getElementById(pfx+'X').value,
+    ty:      +document.getElementById(pfx+'Y').value,
+  };
+}
+
+async function dlCurrent(){
+  const proc = v('fProc') || document.getElementById('pProc').textContent;
+  const name = v('fName');
+  const date = v('fDate') ? fmtDate(v('fDate')) : '';
+  if(!S.bURL || !S.aURL){ toast('Selecione as duas fotos primeiro','err'); return; }
+  const cv = await buildDownloadCanvas(S.bURL, S.aURL, proc, name, date, getAdj('B'), getAdj('A'));
+  const a=document.createElement('a');
+  a.download=(name||'antes-depois').replace(/\s+/g,'-')+'.png';
+  a.href=cv.toDataURL('image/png',0.95); a.click();
+}
+
+async function dlComposite(url, patientName, proc, date){
+  // Para imagens da galeria: carrega composite e adiciona legenda
+  const img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=()=>{
+    const W=img.width, H=img.height, CAP=Math.round(H*0.11);
+    const cv=document.createElement('canvas');
+    cv.width=W; cv.height=H+CAP;
+    const ctx=cv.getContext('2d');
+    // Imagem (já tem legenda embutida do buildComposite)
+    // Precisamos APENAS do PNG com a imagem + legenda nova por cima
+    // Mas a composite JÁ TEM legenda. Então só baixamos diretamente.
+    // Download direto via fetch
+    fetch(url)
+      .then(r=>r.blob())
+      .then(blob=>{
+        const burl=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=burl;
+        a.download=(patientName||'antes-depois').replace(/\s+/g,'-')+'.jpg';
+        a.click();
+        setTimeout(()=>URL.revokeObjectURL(burl),2000);
+      })
+      .catch(()=>window.open(url,'_blank'));
+  };
+  img.onerror=()=>{
+    fetch(url).then(r=>r.blob()).then(blob=>{
+      const burl=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=burl; a.download=(patientName||'registro')+'.jpg'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(burl),2000);
+    }).catch(()=>window.open(url,'_blank'));
+  };
+  img.src=url;
+}
+
 
 // ─── GALLERY ─────────────────────────────────────────────
 async function loadGallery(){
