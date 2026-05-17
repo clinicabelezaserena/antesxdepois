@@ -137,6 +137,25 @@ section.active{display:block}
 .toast.err{background:#8B2E2E;color:white}
 .toast.show{opacity:1;transform:translateY(0)}
 
+/* DELETE BUTTON */
+.btn-del{background:none;border:1px solid #c9a0a0;color:#8B2E2E;padding:0.42rem 0.9rem;font-family:var(--sans);font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;flex-shrink:0}
+.btn-del:hover{background:#8B2E2E;color:white;border-color:#8B2E2E}
+
+/* ADMIN MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(58,46,40,0.55);z-index:999;display:flex;align-items:center;justify-content:center}
+.modal-box{background:var(--cream);border:1px solid var(--sand);border-radius:4px;padding:2rem 2.5rem;width:360px;max-width:90vw}
+.modal-title{font-family:var(--serif);font-size:1.3rem;font-weight:300;color:var(--dark);margin-bottom:0.3rem}
+.modal-sub{font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--brown);margin-bottom:1.5rem}
+.modal-field{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.25rem}
+.modal-field label{font-size:0.63rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown);font-weight:500}
+.modal-field input{border:1px solid var(--sand);border-radius:2px;padding:0.75rem 1rem;font-family:var(--sans);font-size:0.85rem;color:var(--dark);background:white;outline:none;transition:border-color 0.2s}
+.modal-field input:focus{border-color:var(--brown)}
+.modal-btns{display:flex;gap:0.75rem;justify-content:flex-end}
+.modal-cancel{background:none;border:1px solid var(--sand);color:var(--brown);padding:0.6rem 1.25rem;font-family:var(--sans);font-size:0.63rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s}
+.modal-cancel:hover{border-color:var(--brown)}
+.modal-confirm{background:#8B2E2E;color:white;border:none;padding:0.6rem 1.25rem;font-family:var(--sans);font-size:0.63rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s}
+.modal-confirm:hover{background:#6e2222}
+
 /* SPINNER */
 .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:rot 0.7s linear infinite;vertical-align:middle}
 @keyframes rot{to{transform:rotate(360deg)}}
@@ -376,15 +395,51 @@ function sync(){
 }
 
 // ─── CLOUDINARY UPLOAD ───────────────────────────────────
-async function upCloud(file, pid){
+async function upCloud(fileOrBlob, pid){
   const fd = new FormData();
-  fd.append('file', file);
+  fd.append('file', fileOrBlob);
   fd.append('upload_preset', CLOUDINARY_PRESET);
   fd.append('public_id', pid);
   fd.append('folder','beleza-serena');
   const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_NAME}/image/upload`,{method:'POST',body:fd});
   if(!r.ok) throw new Error('Cloudinary falhou');
   return (await r.json()).secure_url;
+}
+
+// Gera blob da imagem composta (antes + depois) via canvas
+function buildComposite(bSrc, aSrc, proc, name, date){
+  return new Promise((resolve)=>{
+    const W=1600, H=900, CAP=88;
+    const cv=document.createElement('canvas');
+    cv.width=W; cv.height=H+CAP;
+    const ctx=cv.getContext('2d');
+    const iB=new Image(), iA=new Image();
+    let n=0;
+    function draw(){
+      ctx.fillStyle='#FAF9F9'; ctx.fillRect(0,0,W,H+CAP);
+      [[iB,0],[iA,W/2]].forEach(([img,x])=>{
+        ctx.save(); ctx.beginPath(); ctx.rect(x,0,W/2,H); ctx.clip();
+        const r=Math.max((W/2)/img.width,H/img.height);
+        const sw=img.width*r,sh=img.height*r;
+        ctx.drawImage(img,x+(W/2-sw)/2,(H-sh)/2,sw,sh);
+        ctx.restore();
+      });
+      ctx.fillStyle='#FAF9F9'; ctx.fillRect(W/2-1,0,2,H);
+      // Labels
+      function lbl(t,x,y){ ctx.font='500 11px Montserrat'; const m=ctx.measureText(t); ctx.fillStyle='rgba(255,255,255,0.88)'; ctx.fillRect(x-8,y-13,m.width+16,22); ctx.fillStyle='#866D5B'; ctx.fillText(t,x,y+5); }
+      lbl('ANTES',40,H-44); lbl('DEPOIS',W/2+20,H-44);
+      // Caption
+      ctx.fillStyle='#FAF9F9'; ctx.fillRect(0,H,W,CAP);
+      ctx.fillStyle='#E8E1DA'; ctx.fillRect(0,H,W,1);
+      ctx.fillStyle='#3a2e28'; ctx.font='300 30px "Cormorant Garamond"'; ctx.fillText(proc||'',44,H+52);
+      ctx.fillStyle='#866D5B'; ctx.font='400 11px Montserrat';
+      ctx.fillText(([name,date?fmtDate(date):''].filter(Boolean).join('  ·  ')).toUpperCase(),44,H+73);
+      ctx.textAlign='right'; ctx.fillText('BELEZA SERENA  —  ESTÉTICA AVANÇADA',W-44,H+65); ctx.textAlign='left';
+      cv.toBlob(blob=>resolve(blob),'image/jpeg',0.92);
+    }
+    iB.onload=iA.onload=()=>{ if(++n===2) draw(); };
+    iB.src=bSrc; iA.src=aSrc;
+  });
 }
 
 // ─── SALVAR REGISTRO ─────────────────────────────────────
@@ -395,26 +450,30 @@ async function saveRecord(){
   const fill = document.getElementById('progFill');
 
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Enviando…';
+  btn.innerHTML = '<span class="spin"></span> Montando imagem…';
   prog.style.display = 'block';
-  fill.style.width = '15%';
+  fill.style.width = '20%';
 
   try {
     const ts   = Date.now();
     const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
 
-    fill.style.width = '30%';
-    const bURL = await upCloud(S.bFile, `${slug}-antes-${ts}`);
-    fill.style.width = '60%';
-    const aURL = await upCloud(S.aFile, `${slug}-depois-${ts}`);
-    fill.style.width = '80%';
+    // 1. Montar imagem composta localmente
+    fill.style.width = '40%';
+    btn.innerHTML = '<span class="spin"></span> Enviando…';
+    const blob = await buildComposite(S.bURL, S.aURL, proc, name, date);
 
+    // 2. Upload de 1 arquivo apenas
+    fill.style.width = '75%';
+    const compositeURL = await upCloud(blob, `${slug}-${ts}`);
+    fill.style.width = '88%';
+
+    // 3. Salvar no Supabase com 1 URL
     const {error} = await sb.from('registros').insert([{
       patient_name:   name,
       procedure_date: date,
       procedure_name: proc,
-      before_url:     bURL,
-      after_url:      aURL,
+      composite_url:  compositeURL,
       created_at:     new Date().toISOString()
     }]);
     if(error) throw error;
@@ -458,8 +517,10 @@ function resetForm(){
 function dlCurrent(){
   renderDL(S.bURL, S.aURL, v('fProc')||document.getElementById('pProc').textContent, v('fName'), v('fDate'), v('fName')||'paciente');
 }
-function dlRecord(b,a,proc,name,date){
-  renderDL(b,a,proc,name,date,name);
+function dlComposite(url, name){
+  const a=document.createElement('a');
+  a.href=url; a.download=(name||'antes-depois').replace(/\s+/g,'-')+'.jpg';
+  a.target='_blank'; a.click();
 }
 
 function renderDL(bSrc,aSrc,proc,name,date,fname){
@@ -533,17 +594,15 @@ function renderG(recs){
   if(!recs.length){ g.innerHTML='<div class="empty"><p>Nenhum resultado</p><span>Tente outros filtros</span></div>'; return; }
   g.innerHTML=recs.map(r=>{
     const fav=S.favs.has(r.id);
+    const img=r.composite_url||r.before_url||'';
     return `
     <div class="gal-card" id="card-${r.id}">
       <div class="gal-pair" style="position:relative">
-        <div class="gal-side">
-          <img src="${r.before_url}" alt="Antes" loading="lazy">
+        <div style="position:relative;overflow:hidden;width:100%;height:100%">
+          <img src="${img}" alt="Antes e Depois" loading="lazy" style="width:100%;height:100%;object-fit:cover">
           <span class="img-tag tag-left" style="font-size:0.52rem;padding:0.28rem 0.65rem">Antes</span>
-        </div>
-        <div class="gal-divider"></div>
-        <div class="gal-side">
-          <img src="${r.after_url}" alt="Depois" loading="lazy">
           <span class="img-tag tag-right" style="font-size:0.52rem;padding:0.28rem 0.65rem">Depois</span>
+          <div style="position:absolute;top:0;left:50%;width:1px;height:100%;background:rgba(255,255,255,0.7)"></div>
         </div>
         <button class="star-btn ${fav?'fav':''}" onclick="toggleFav('${r.id}',this)" title="${fav?'Remover favorito':'Favoritar'}">${fav?'★':'☆'}</button>
       </div>
@@ -552,7 +611,10 @@ function renderG(recs){
           <div class="gal-proc">${esc(r.procedure_name)}</div>
           <div class="gal-meta">${esc(r.patient_name)} · ${r.procedure_date?fmtDate(r.procedure_date):''}</div>
         </div>
-        <button class="btn-dls" onclick="dlRecord('${r.before_url}','${r.after_url}',${JSON.stringify(r.procedure_name)},${JSON.stringify(r.patient_name)},'${r.procedure_date}')">↓ Download</button>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <button class="btn-dls" onclick="dlComposite('${img}',${JSON.stringify(r.patient_name)})">↓ Download</button>
+          <button class="btn-del" onclick="confirmDelete('${r.id}','${img}')">✕ Excluir</button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -635,6 +697,63 @@ function toggleFav(id, btn){
   localStorage.setItem('bs_favs', JSON.stringify([...S.favs]));
   if(S.favOnly) filterG();
 }
+
+// ─── DELETE COM SENHA ADMIN ──────────────────────────────
+const ADMIN_HASH = '*123Bs456';
+
+function confirmDelete(id, compositeUrl){
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'adminModal';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">Acesso restrito</div>
+      <div class="modal-sub">Confirme sua senha de administrador</div>
+      <div class="modal-field">
+        <label>Senha</label>
+        <input type="password" id="adminPwd" placeholder="••••••••" autocomplete="off">
+      </div>
+      <div id="modalErr" style="font-size:0.7rem;color:#8B2E2E;margin-bottom:1rem;display:none">Senha incorreta</div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="modal-confirm" onclick="doDelete('${id}','${compositeUrl}')">Excluir registro</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(()=>{ const p=document.getElementById('adminPwd'); if(p) p.focus(); },50);
+  overlay.addEventListener('keydown', e=>{ if(e.key==='Enter') doDelete(id,compositeUrl); if(e.key==='Escape') closeModal(); });
+}
+
+function closeModal(){
+  const m=document.getElementById('adminModal');
+  if(m) m.remove();
+}
+
+async function doDelete(id, compositeUrl){
+  const pwd = (document.getElementById('adminPwd')||{}).value||'';
+  if(pwd !== ADMIN_HASH){
+    const err=document.getElementById('modalErr');
+    if(err) err.style.display='block';
+    const p=document.getElementById('adminPwd');
+    if(p){ p.value=''; p.focus(); }
+    return;
+  }
+  closeModal();
+  try {
+    const {error} = await sb.from('registros').delete().eq('id', id);
+    if(error) throw error;
+    S.records = S.records.filter(r=>r.id!==id);
+    S.favs.delete(id);
+    localStorage.setItem('bs_favs', JSON.stringify([...S.favs]));
+    filterG();
+    toast('Registro excluído','ok');
+  } catch(e){
+    console.error(e);
+    toast('Erro ao excluir — tente novamente','err');
+  }
+}
+
 
 function v(id){ return document.getElementById(id).value; }
 function fmtDate(d){ if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
