@@ -208,6 +208,10 @@ section.active{display:block}
 .adj-reset{background:none;border:1px solid var(--sand);color:var(--brown);padding:0.35rem 0.85rem;font-family:var(--sans);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;white-space:nowrap}
 .adj-reset:hover{border-color:var(--brown)}
 .adj-divider{height:1px;background:var(--blush);margin:1rem 0}
+.adj-pair{display:flex;align-items:center;gap:0.4rem}
+.adj-pair input[type=range]{flex:1}
+.adj-num{width:52px;border:1px solid var(--sand);border-radius:2px;padding:0.2rem 0.35rem;font-family:var(--sans);font-size:0.68rem;color:var(--dark);background:white;text-align:center;outline:none}
+.adj-num:focus{border-color:var(--brown)}
 
 canvas{display:none}
 
@@ -327,24 +331,38 @@ const CLOUDINARY_PRESET= 'beleza_serena';
         <div class="adj-controls">
           <div class="adj-item">
             <label>Zoom</label>
-            <input type="range" min="80" max="200" value="100" id="adjBZoom" oninput="applyAdj('B')">
-            <span id="adjBZoomVal">100%</span>
+            <div class="adj-pair">
+              <input type="range" min="80" max="200" value="100" id="adjBZoom" oninput="syncAdj('B','Zoom',this.value)">
+              <input type="number" min="80" max="200" value="100" id="adjBZoomN" oninput="syncAdj('B','Zoom',this.value)" class="adj-num">
+            </div>
           </div>
           <div class="adj-item">
             <label>Brilho</label>
-            <input type="range" min="50" max="150" value="100" id="adjBBright" oninput="applyAdj('B')">
+            <div class="adj-pair">
+              <input type="range" min="50" max="150" value="100" id="adjBBright" oninput="syncAdj('B','Bright',this.value)">
+              <input type="number" min="50" max="150" value="100" id="adjBBrightN" oninput="syncAdj('B','Bright',this.value)" class="adj-num">
+            </div>
           </div>
           <div class="adj-item">
             <label>Contraste</label>
-            <input type="range" min="50" max="150" value="100" id="adjBContrast" oninput="applyAdj('B')">
+            <div class="adj-pair">
+              <input type="range" min="50" max="150" value="100" id="adjBContrast" oninput="syncAdj('B','Contrast',this.value)">
+              <input type="number" min="50" max="150" value="100" id="adjBContrastN" oninput="syncAdj('B','Contrast',this.value)" class="adj-num">
+            </div>
           </div>
           <div class="adj-item">
             <label>Horizontal</label>
-            <input type="range" min="-200" max="200" value="0" id="adjBX" oninput="applyAdj('B')">
+            <div class="adj-pair">
+              <input type="range" min="-200" max="200" value="0" id="adjBX" oninput="syncAdj('B','X',this.value)">
+              <input type="number" min="-200" max="200" value="0" id="adjBXN" oninput="syncAdj('B','X',this.value)" class="adj-num">
+            </div>
           </div>
           <div class="adj-item">
             <label>Vertical</label>
-            <input type="range" min="-200" max="200" value="0" id="adjBY" oninput="applyAdj('B')">
+            <div class="adj-pair">
+              <input type="range" min="-200" max="200" value="0" id="adjBY" oninput="syncAdj('B','Y',this.value)">
+              <input type="number" min="-200" max="200" value="0" id="adjBYN" oninput="syncAdj('B','Y',this.value)" class="adj-num">
+            </div>
           </div>
         </div>
         <button class="adj-reset" onclick="resetAdj('B')">↺ Resetar</button>
@@ -355,24 +373,38 @@ const CLOUDINARY_PRESET= 'beleza_serena';
         <div class="adj-controls">
           <div class="adj-item">
             <label>Zoom</label>
-            <input type="range" min="80" max="200" value="100" id="adjAZoom" oninput="applyAdj('A')">
-            <span id="adjAZoomVal">100%</span>
+            <div class="adj-pair">
+              <input type="range" min="80" max="200" value="100" id="adjAZoom" oninput="syncAdj('A','Zoom',this.value)">
+              <input type="number" min="80" max="200" value="100" id="adjAZoomN" oninput="syncAdj('A','Zoom',this.value)" class="adj-num">
+            </div>
           </div>
           <div class="adj-item">
             <label>Brilho</label>
-            <input type="range" min="50" max="150" value="100" id="adjABright" oninput="applyAdj('A')">
+            <div class="adj-pair">
+              <input type="range" min="50" max="150" value="100" id="adjABright" oninput="syncAdj('A','Bright',this.value)">
+              <input type="number" min="50" max="150" value="100" id="adjABrightN" oninput="syncAdj('A','Bright',this.value)" class="adj-num">
+            </div>
           </div>
           <div class="adj-item">
             <label>Contraste</label>
-            <input type="range" min="50" max="150" value="100" id="adjAContrast" oninput="applyAdj('A')">
+            <div class="adj-pair">
+              <input type="range" min="50" max="150" value="100" id="adjAContrast" oninput="syncAdj('A','Contrast',this.value)">
+              <input type="number" min="50" max="150" value="100" id="adjAContrastN" oninput="syncAdj('A','Contrast',this.value)" class="adj-num">
+            </div>
           </div>
           <div class="adj-item">
             <label>Horizontal</label>
-            <input type="range" min="-200" max="200" value="0" id="adjAX" oninput="applyAdj('A')">
+            <div class="adj-pair">
+              <input type="range" min="-200" max="200" value="0" id="adjAX" oninput="syncAdj('A','X',this.value)">
+              <input type="number" min="-200" max="200" value="0" id="adjAXN" oninput="syncAdj('A','X',this.value)" class="adj-num">
+            </div>
           </div>
           <div class="adj-item">
             <label>Vertical</label>
-            <input type="range" min="-200" max="200" value="0" id="adjAY" oninput="applyAdj('A')">
+            <div class="adj-pair">
+              <input type="range" min="-200" max="200" value="0" id="adjAY" oninput="syncAdj('A','Y',this.value)">
+              <input type="number" min="-200" max="200" value="0" id="adjAYN" oninput="syncAdj('A','Y',this.value)" class="adj-num">
+            </div>
           </div>
         </div>
         <button class="adj-reset" onclick="resetAdj('A')">↺ Resetar</button>
@@ -384,7 +416,13 @@ const CLOUDINARY_PRESET= 'beleza_serena';
         <div class="cap-proc" id="pProc">—</div>
         <div class="cap-meta" id="pMeta">—</div>
       </div>
-      <button class="btn-dl" onclick="dlCurrent()">↓ &nbsp;Download</button>
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
+        <button class="btn-dl" onclick="dlCurrent()">↓ &nbsp;Download</button>
+        <button class="btn-dl" id="btnSaveAdj" onclick="saveWithAdj()"
+          style="background:var(--brown);color:white;border-color:var(--brown);opacity:0.4;cursor:not-allowed" disabled>
+          ↑ &nbsp;Salvar na galeria
+        </button>
+      </div>
     </div>
   </div>
 </section>
@@ -517,6 +555,12 @@ function sync(){
   const ready = S.bFile && S.aFile && name.trim() && date && proc.trim();
   document.getElementById('btnSave').disabled = !ready;
   document.getElementById('btnPrev').disabled = !(S.bURL && S.aURL);
+  const btnSAdj = document.getElementById('btnSaveAdj');
+  if(btnSAdj){
+    btnSAdj.disabled = !ready;
+    btnSAdj.style.opacity = ready ? '1' : '0.4';
+    btnSAdj.style.cursor  = ready ? 'pointer' : 'not-allowed';
+  }
 }
 
 // ─── CLOUDINARY UPLOAD ───────────────────────────────────
@@ -575,6 +619,66 @@ function buildComposite(bSrc, aSrc, proc, name, date){
 }
 
 // ─── SALVAR REGISTRO ─────────────────────────────────────
+// Salva na galeria com os ajustes da prévia aplicados
+async function saveWithAdj(){
+  const name = v('fName').trim(), date = v('fDate'), proc = v('fProc').trim();
+  if(!S.bURL || !S.aURL || !name || !date || !proc){
+    toast('Preencha todos os campos primeiro','err'); return;
+  }
+
+  const btn = document.getElementById('btnSaveAdj');
+  const prog = document.getElementById('prog');
+  const fill = document.getElementById('progFill');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin" style="border-top-color:white"></span> &nbsp;Salvando…';
+  prog.style.display = 'block';
+  fill.style.width = '15%';
+
+  try {
+    const ts   = Date.now();
+    const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+
+    // Usar buildDownloadCanvas com ajustes aplicados (inclui legenda)
+    fill.style.width = '35%';
+    const cv = await buildDownloadCanvas(S.bURL, S.aURL, proc, name, date?fmtDate(date):'', getAdj('B'), getAdj('A'));
+    fill.style.width = '55%';
+
+    // Converter canvas para blob
+    const blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', 0.92));
+    fill.style.width = '70%';
+
+    // Upload para Cloudinary
+    const compositeURL = await upCloud(blob, `${slug}-adj-${ts}`);
+    fill.style.width = '88%';
+
+    // Salvar no Supabase
+    const {error} = await sb.from('registros').insert([{
+      patient_name:   name,
+      procedure_date: date,
+      procedure_name: proc,
+      composite_url:  compositeURL,
+      created_at:     new Date().toISOString()
+    }]);
+    if(error) throw error;
+
+    fill.style.width = '100%';
+    toast('Salvo na galeria com ajustes ✓','ok');
+    setTimeout(()=>{
+      prog.style.display='none';
+      fill.style.width='0%';
+      btn.disabled = false;
+      btn.innerHTML = '↑ &nbsp;Salvar na galeria';
+    }, 900);
+
+  } catch(e){
+    console.error(e);
+    toast('Erro ao salvar — verifique as configurações','err');
+    btn.disabled = false;
+    btn.innerHTML = '↑ &nbsp;Salvar na galeria';
+    prog.style.display = 'none';
+  }
+}
+
 async function saveRecord(){
   const name = v('fName').trim(), date = v('fDate'), proc = v('fProc').trim();
   const btn  = document.getElementById('btnSave');
@@ -646,17 +750,26 @@ function resetForm(){
 }
 
 // ─── AJUSTES DE IMAGEM ───────────────────────────────────
+function syncAdj(side, key, val){
+  const pfx = side==='B' ? 'adjB' : 'adjA';
+  const v = Math.round(+val) || 0;
+  // Sync range ↔ number
+  const range = document.getElementById(pfx+key);
+  const num   = document.getElementById(pfx+key+'N');
+  if(range) range.value = v;
+  if(num)   num.value   = v;
+  applyAdj(side);
+}
+
 function applyAdj(side){
   const pfx = side==='B' ? 'adjB' : 'adjA';
   const imgEl = document.getElementById(side==='B'?'pBefore':'pAfter');
   if(!imgEl) return;
-  const zoom    = document.getElementById(pfx+'Zoom').value;
-  const bright  = document.getElementById(pfx+'Bright').value;
-  const contrast= document.getElementById(pfx+'Contrast').value;
-  const tx      = document.getElementById(pfx+'X').value;
-  const ty      = document.getElementById(pfx+'Y').value;
-  const zv = document.getElementById(pfx+'ZoomVal');
-  if(zv) zv.textContent = zoom+'%';
+  const zoom    = +(document.getElementById(pfx+'Zoom')||{value:100}).value;
+  const bright  = +(document.getElementById(pfx+'Bright')||{value:100}).value;
+  const contrast= +(document.getElementById(pfx+'Contrast')||{value:100}).value;
+  const tx      = +(document.getElementById(pfx+'X')||{value:0}).value;
+  const ty      = +(document.getElementById(pfx+'Y')||{value:0}).value;
   imgEl.style.transform = `scale(${zoom/100}) translate(${tx}px,${ty}px)`;
   imgEl.style.filter    = `brightness(${bright}%) contrast(${contrast}%)`;
 }
@@ -664,15 +777,17 @@ function applyAdj(side){
 function resetAdj(side){
   const pfx = side==='B' ? 'adjB' : 'adjA';
   ['Zoom','Bright','Contrast'].forEach(k=>{
-    const el=document.getElementById(pfx+k);
-    if(el) el.value=100;
+    ['',  'N'].forEach(s=>{
+      const el=document.getElementById(pfx+k+s);
+      if(el) el.value=100;
+    });
   });
   ['X','Y'].forEach(k=>{
-    const el=document.getElementById(pfx+k);
-    if(el) el.value=0;
+    ['','N'].forEach(s=>{
+      const el=document.getElementById(pfx+k+s);
+      if(el) el.value=0;
+    });
   });
-  const zv=document.getElementById(pfx+'ZoomVal');
-  if(zv) zv.textContent='100%';
   applyAdj(side);
 }
 
@@ -746,13 +861,13 @@ function buildDownloadCanvas(bSrc, aSrc, proc, name, date, adjB, adjA){
 function getAdj(side){
   const pfx = side==='B'?'adjB':'adjA';
   const z=document.getElementById(pfx+'Zoom');
-  if(!z) return null;
+  if(!z) return {zoom:100,bright:100,contrast:100,tx:0,ty:0};
   return {
-    zoom:    +document.getElementById(pfx+'Zoom').value,
-    bright:  +document.getElementById(pfx+'Bright').value,
-    contrast:+document.getElementById(pfx+'Contrast').value,
-    tx:      +document.getElementById(pfx+'X').value,
-    ty:      +document.getElementById(pfx+'Y').value,
+    zoom:    +(z.value)||100,
+    bright:  +(document.getElementById(pfx+'Bright')||{value:100}).value,
+    contrast:+(document.getElementById(pfx+'Contrast')||{value:100}).value,
+    tx:      +(document.getElementById(pfx+'X')||{value:0}).value,
+    ty:      +(document.getElementById(pfx+'Y')||{value:0}).value,
   };
 }
 
@@ -768,41 +883,36 @@ async function dlCurrent(){
 }
 
 async function dlComposite(url, patientName, proc, date){
-  // Para imagens da galeria: carrega composite e adiciona legenda
-  const img=new Image();
-  img.crossOrigin='anonymous';
-  img.onload=()=>{
-    const W=img.width, H=img.height, CAP=Math.round(H*0.11);
-    const cv=document.createElement('canvas');
-    cv.width=W; cv.height=H+CAP;
-    const ctx=cv.getContext('2d');
-    // Imagem (já tem legenda embutida do buildComposite)
-    // Precisamos APENAS do PNG com a imagem + legenda nova por cima
-    // Mas a composite JÁ TEM legenda. Então só baixamos diretamente.
-    // Download direto via fetch
-    fetch(url)
-      .then(r=>r.blob())
-      .then(blob=>{
-        const burl=URL.createObjectURL(blob);
+  toast('Preparando download…','ok');
+  try {
+    const res = await fetch(url, {mode:'cors'});
+    if(!res.ok) throw new Error('fetch falhou');
+    const blob = await res.blob();
+    const burl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = burl;
+    a.download = (patientName||'antes-depois').replace(/[\s\/]/g,'-')+'.jpg';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(burl),3000);
+  } catch(e){
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{
+      try{
+        const cv=document.createElement('canvas');
+        cv.width=img.width; cv.height=img.height;
+        cv.getContext('2d').drawImage(img,0,0);
         const a=document.createElement('a');
-        a.href=burl;
-        a.download=(patientName||'antes-depois').replace(/\s+/g,'-')+'.jpg';
-        a.click();
-        setTimeout(()=>URL.revokeObjectURL(burl),2000);
-      })
-      .catch(()=>window.open(url,'_blank'));
-  };
-  img.onerror=()=>{
-    fetch(url).then(r=>r.blob()).then(blob=>{
-      const burl=URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=burl; a.download=(patientName||'registro')+'.jpg'; a.click();
-      setTimeout(()=>URL.revokeObjectURL(burl),2000);
-    }).catch(()=>window.open(url,'_blank'));
-  };
-  img.src=url;
+        a.download=(patientName||'registro').replace(/[\s\/]/g,'-')+'.png';
+        a.href=cv.toDataURL('image/png',0.92); a.click();
+      }catch(e2){
+        window.open(url,'_blank');
+        toast('Aberta em nova aba — salve com botão direito','ok');
+      }
+    };
+    img.onerror=()=>{ window.open(url,'_blank'); toast('Aberta em nova aba — salve com botão direito','ok'); };
+    img.src=url;
+  }
 }
-
 
 // ─── GALLERY ─────────────────────────────────────────────
 async function loadGallery(){
