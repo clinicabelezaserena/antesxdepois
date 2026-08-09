@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <script src="https://accounts.google.com/gsi/client"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
@@ -1727,87 +1728,74 @@ async function dbConfirmSelect(){
   if(!DB.selected) return;
   const {id, name} = DB.selected;
   closeDriveBrowser();
-  toast('Baixando imagem do Drive…','ok');
+  toast('Baixando do Drive…','ok');
 
   try{
-    // 1. Buscar metadados para confirmar acesso
-    const metaRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${id}?fields=id,name,mimeType,size`,
-      { headers:{ Authorization:`Bearer ${gAccessToken}` } }
-    );
-    if(!metaRes.ok) throw new Error('Acesso negado ('+metaRes.status+')');
-    const meta = await metaRes.json();
-    toast(`Baixando: ${meta.name} (${meta.mimeType})…`, 'ok');
-
-    // 2. Download do conteúdo
+    // Download do arquivo
     const mediaRes = await fetch(
       `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
       { headers:{ Authorization:`Bearer ${gAccessToken}` } }
     );
-    if(!mediaRes.ok) throw new Error('Download falhou ('+mediaRes.status+')');
-    const blob = await mediaRes.blob();
+    if(!mediaRes.ok) throw new Error('Erro no download ('+mediaRes.status+')');
+    let blob = await mediaRes.blob();
 
-    if(blob.size === 0) throw new Error('Arquivo vazio');
-    toast(`Arquivo recebido: ${(blob.size/1024).toFixed(0)}KB tipo:${blob.type}`, 'ok');
+    // Converter HEIC/HEIF para JPEG se necessário
+    const isHeic = blob.type.includes('heic') || blob.type.includes('heif')
+      || name.toLowerCase().endsWith('.heic') || name.toLowerCase().endsWith('.heif')
+      || blob.type === '' || blob.type === 'application/octet-stream';
 
-    // 3. Converter para Data URL via FileReader (mais compatível que blob URL)
-    const dataUrl = await new Promise((resolve, reject)=>{
-      const fr = new FileReader();
-      fr.onload  = ()=> resolve(fr.result);
-      fr.onerror = ()=> reject(new Error('FileReader falhou'));
-      fr.readAsDataURL(blob);
-    });
+    if(isHeic || !blob.type.startsWith('image/')){
+      toast('Convertendo HEIC para JPEG…','ok');
+      try{
+        const converted = await heic2any({ blob, toType:'image/jpeg', quality:0.92 });
+        blob = Array.isArray(converted) ? converted[0] : converted;
+      } catch(convErr){
+        console.warn('heic2any falhou, tentando exibir original:', convErr);
+        // tenta continuar com blob original
+      }
+    }
 
-    if(!dataUrl || dataUrl.length < 100) throw new Error('Data URL inválida');
+    // Criar File e URL displayável
+    const ext  = blob.type.includes('png') ? 'png' : 'jpg';
+    const safeName = (name || 'imagem').replace(/\.heic$/i,'.jpg').replace(/\.heif$/i,'.jpg');
+    const file = new File([blob], safeName, {type: blob.type || 'image/jpeg'});
+    const url  = URL.createObjectURL(blob);
 
     const side = gPickerTarget;
     const key  = side==='before' ? 'b' : 'a';
-    const ext  = blob.type.includes('png') ? 'png' : 'jpg';
-    const file = new File([blob], (meta.name||'imagem')+'.'+ext, {type: blob.type||'image/jpeg'});
-
     S[key+'File'] = file;
-    S[key+'URL']  = dataUrl;
+    S[key+'URL']  = url;
 
-    // 4. Montar zona de upload diretamente via DOM (sem innerHTML com string grande)
-    const zoneId = side==='before' ? 'zBefore' : 'zAfter';
-    const contId = side==='before' ? 'cBefore' : 'cAfter';
-    const zone = document.getElementById(zoneId);
-    const cont = document.getElementById(contId);
+    // Montar zona de upload
+    const zone = document.getElementById(side==='before'?'zBefore':'zAfter');
+    const cont = document.getElementById(side==='before'?'cBefore':'cAfter');
 
-    if(!zone || !cont) throw new Error('Elementos da zona não encontrados');
+    if(zone) zone.classList.add('filled');
+    if(cont){
+      while(cont.firstChild) cont.removeChild(cont.firstChild);
 
-    zone.classList.add('filled');
+      const img = document.createElement('img');
+      img.style.cssText = 'width:100%;height:260px;object-fit:contain;background:#F5F2EF;display:block;border-radius:2px';
+      img.onerror = ()=> toast('Formato não suportado pelo browser','err');
+      cont.appendChild(img);
+      img.src = url;
 
-    // Limpar e criar elementos via DOM API
-    while(cont.firstChild) cont.removeChild(cont.firstChild);
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = side==='before' ? 'Antes' : 'Depois';
+      cont.appendChild(badge);
 
-    const img = document.createElement('img');
-    img.style.width   = '100%';
-    img.style.height  = '260px';
-    img.style.objectFit = 'contain';
-    img.style.background = '#F5F2EF';
-    img.style.display = 'block';
-    img.style.borderRadius = '2px';
-    img.onerror = ()=>{ toast('Imagem não pôde ser exibida — formato não suportado','err'); };
-    // Setar src APÓS adicionar ao DOM para garantir render
-    cont.appendChild(img);
-    img.src = dataUrl;
-
-    const badge = document.createElement('span');
-    badge.className = 'badge';
-    badge.textContent = side==='before' ? 'Antes' : 'Depois';
-    cont.appendChild(badge);
-
-    const changeBtn = document.createElement('span');
-    changeBtn.className = 'change-btn';
-    changeBtn.textContent = 'Alterar foto';
-    cont.appendChild(changeBtn);
+      const btn = document.createElement('span');
+      btn.className = 'change-btn';
+      btn.textContent = 'Alterar foto';
+      cont.appendChild(btn);
+    }
 
     sync();
-    toast('Imagem importada com sucesso ✓','ok');
+    toast('Imagem importada ✓','ok');
 
   }catch(e){
-    console.error('Drive import error:', e);
+    console.error(e);
     toast('Erro: '+e.message,'err');
   }
 }
