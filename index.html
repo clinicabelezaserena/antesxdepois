@@ -751,23 +751,31 @@ function goHome(){
 }
 
 // ─── FILE PICK ───────────────────────────────────────────
-function pickFile(side, input){
+async function pickFile(side, input){
   const file = input.files[0];
   if(!file) return;
-  const url  = URL.createObjectURL(file);
-  const key  = side === 'before' ? 'b' : 'a';
-  S[key+'File'] = file;
-  S[key+'URL']  = url;
+  const key = side === 'before' ? 'b' : 'a';
 
   const zone = document.getElementById(side==='before'?'zBefore':'zAfter');
   const cont = document.getElementById(side==='before'?'cBefore':'cAfter');
-  zone.classList.add('filled');
-  cont.innerHTML = `
-    <img src="${url}" alt="${side}" style="width:100%;height:260px;object-fit:cover;display:block;border-radius:2px">
-    <span class="badge">${side==='before'?'Antes':'Depois'}</span>
-    <span class="change-btn">Alterar foto</span>
-  `;
-  sync();
+
+  try{
+    const { url, file: finalFile } = await ensureDisplayableImage(file, side);
+    S[key+'File'] = finalFile;
+    S[key+'URL']  = url;
+
+    zone.classList.add('filled');
+    cont.innerHTML = `
+      <img src="${url}" alt="${side}" style="width:100%;height:260px;object-fit:contain;background:#F5F2EF;display:block;border-radius:2px">
+      <span class="badge">${side==='before'?'Antes':'Depois'}</span>
+      <span class="change-btn">Alterar foto</span>
+    `;
+    sync();
+    toast('Foto carregada ✓','ok');
+  }catch(e){
+    console.error(e);
+    toast('Erro ao processar imagem: '+e.message,'err');
+  }
 }
 
 // ─── SYNC PREVIEW ────────────────────────────────────────
@@ -795,6 +803,48 @@ function sync(){
 }
 
 // ─── CLOUDINARY UPLOAD ───────────────────────────────────
+// Testa se uma URL de imagem carrega normalmente no browser
+function testImageLoads(url){
+  return new Promise((resolve)=>{
+    const im = new Image();
+    const t = setTimeout(()=>resolve(false), 4000);
+    im.onload  = ()=>{ clearTimeout(t); resolve(true); };
+    im.onerror = ()=>{ clearTimeout(t); resolve(false); };
+    im.src = url;
+  });
+}
+
+// Garante uma imagem exibível e utilizável em canvas.
+// Caminho rápido: se o browser conseguir decodificar localmente (JPEG/PNG/WebP), usa direto.
+// Caminho lento: se falhar (HEIC/HEIF), sobe pro Cloudinary que converte e libera CORS.
+async function ensureDisplayableImage(file, sidePrefix){
+  const localUrl = URL.createObjectURL(file);
+  const worksLocally = await testImageLoads(localUrl);
+
+  if(worksLocally){
+    return { url: localUrl, file };
+  }
+
+  // Fallback: converter via Cloudinary
+  toast('Formato não suportado nativamente — convertendo…','ok');
+  const ts = Date.now();
+  const rawUrl = await upCloud(file, `${sidePrefix}-conv-${ts}`);
+  // Insere transformação para forçar JPEG com CORS liberado
+  const jpgUrl = rawUrl.includes('/upload/')
+    ? rawUrl.replace('/upload/', '/upload/f_jpg,q_auto/')
+    : rawUrl;
+
+  const worksRemote = await testImageLoads(jpgUrl);
+  if(!worksRemote) throw new Error('Não foi possível processar esta imagem');
+
+  // Baixar o JPEG convertido para termos um File local consistente
+  const res = await fetch(jpgUrl);
+  const jpgBlob = await res.blob();
+  const jpgFile = new File([jpgBlob], (file.name||'imagem').replace(/\.[^.]+$/,'.jpg'), {type:'image/jpeg'});
+
+  return { url: jpgUrl, file: jpgFile };
+}
+
 async function upCloud(fileOrBlob, pid){
   const fd = new FormData();
   fd.append('file', fileOrBlob);
@@ -1732,44 +1782,26 @@ async function dbConfirmSelect(){
   const item = DB.selected;
   const side = gPickerTarget;
   closeDriveBrowser();
-  toast('Carregando imagem…','ok');
+  toast('Baixando do Drive…','ok');
 
   try{
-    // Usa a thumbnail já gerada pelo Google Drive (sempre JPEG, mesmo para HEIC)
-    // Aumenta a resolução trocando o parâmetro de tamanho da URL
-    let imgUrl = item.thumbnailLink;
+    // 1. Baixar bytes reais do arquivo via Drive API (autenticado)
+    const mediaRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${item.id}?alt=media`,
+      { headers:{ Authorization:`Bearer ${gAccessToken}` } }
+    );
+    if(!mediaRes.ok) throw new Error('Erro no download ('+mediaRes.status+')');
+    const rawBlob = await mediaRes.blob();
+    if(rawBlob.size === 0) throw new Error('Arquivo vazio');
 
-    if(!imgUrl){
-      throw new Error('Google Drive não gerou uma prévia para este arquivo. Tente outro arquivo ou converta para JPEG antes de importar.');
-    }
+    const safeName = item.name || 'imagem-drive';
+    const rawFile  = new File([rawBlob], safeName, {type: rawBlob.type || 'application/octet-stream'});
 
-    // Trocar =s220 (ou similar) por =s1600 para melhor qualidade
-    imgUrl = /=s\d+/.test(imgUrl) ? imgUrl.replace(/=s\d+/, '=s1600') : imgUrl + '=s1600';
+    // 2. Usar o mesmo pipeline do upload normal: tenta local, senão converte via Cloudinary
+    const { url, file: finalFile } = await ensureDisplayableImage(rawFile, side);
 
-    // Carregar via <img> — não precisa de auth header, usa sessão do Google no browser
-    const loadedImg = await new Promise((resolve, reject)=>{
-      const im = new Image();
-      im.crossOrigin = 'anonymous';
-      im.onload  = ()=> resolve(im);
-      im.onerror = ()=> reject(new Error('Não foi possível carregar a prévia do Drive'));
-      im.src = imgUrl;
-    });
-
-    // Desenhar em canvas para obter um Blob JPEG real e utilizável
-    const cv = document.createElement('canvas');
-    cv.width  = loadedImg.naturalWidth;
-    cv.height = loadedImg.naturalHeight;
-    cv.getContext('2d').drawImage(loadedImg, 0, 0);
-
-    const finalBlob = await new Promise((resolve)=> cv.toBlob(resolve, 'image/jpeg', 0.92));
-    if(!finalBlob) throw new Error('Falha ao processar a imagem');
-
-    const safeName = (item.name||'imagem').replace(/\.(heic|heif)$/i, '.jpg');
-    const file = new File([finalBlob], safeName, {type:'image/jpeg'});
-    const url  = URL.createObjectURL(finalBlob);
-
-    const key  = side==='before' ? 'b' : 'a';
-    S[key+'File'] = file;
+    const key = side==='before' ? 'b' : 'a';
+    S[key+'File'] = finalFile;
     S[key+'URL']  = url;
 
     const zone = document.getElementById(side==='before'?'zBefore':'zAfter');
@@ -1777,21 +1809,11 @@ async function dbConfirmSelect(){
 
     if(zone) zone.classList.add('filled');
     if(cont){
-      while(cont.firstChild) cont.removeChild(cont.firstChild);
-      const img = document.createElement('img');
-      img.style.cssText = 'width:100%;height:260px;object-fit:contain;background:#F5F2EF;display:block;border-radius:2px';
-      cont.appendChild(img);
-      img.src = url;
-
-      const badge = document.createElement('span');
-      badge.className = 'badge';
-      badge.textContent = side==='before' ? 'Antes' : 'Depois';
-      cont.appendChild(badge);
-
-      const btn = document.createElement('span');
-      btn.className = 'change-btn';
-      btn.textContent = 'Alterar foto';
-      cont.appendChild(btn);
+      cont.innerHTML = `
+        <img src="${url}" alt="${side}" style="width:100%;height:260px;object-fit:contain;background:#F5F2EF;display:block;border-radius:2px">
+        <span class="badge">${side==='before'?'Antes':'Depois'}</span>
+        <span class="change-btn">Alterar foto</span>
+      `;
     }
 
     sync();
@@ -1799,7 +1821,7 @@ async function dbConfirmSelect(){
 
   }catch(e){
     console.error('Drive import error:', e);
-    toast(e.message || 'Erro ao importar imagem','err');
+    toast('Erro: '+e.message,'err');
   }
 }
 
