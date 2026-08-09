@@ -6,7 +6,7 @@
 <title>Beleza Serena — Galeria Antes & Depois</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://apis.google.com/js/api.js"></script>
+
 <script src="https://accounts.google.com/gsi/client"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -348,11 +348,52 @@ span.flatpickr-weekday {
 }
 
 
-/* GOOGLE DRIVE PICKER */
+/* GOOGLE DRIVE BROWSER */
 .btn-gdrive{display:inline-flex;align-items:center;justify-content:center;gap:0.55rem;background:none;border:1px solid var(--sand);color:var(--brown);padding:0.55rem 1rem;font-family:var(--sans);font-size:0.63rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;width:100%}
 .btn-gdrive:hover{border-color:var(--brown);background:var(--blush)}
 .gdrive-or{text-align:center;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--sand);margin:0.4rem 0;display:flex;align-items:center;gap:0.6rem}
 .gdrive-or::before,.gdrive-or::after{content:'';flex:1;height:1px;background:var(--blush)}
+
+/* DRIVE BROWSER MODAL */
+.db-overlay{position:fixed;inset:0;background:rgba(30,20,16,0.7);z-index:1001;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.db-modal{background:var(--cream);border-radius:4px;width:100%;max-width:900px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.3)}
+.db-header{padding:1rem 1.5rem;border-bottom:1px solid var(--sand);display:flex;align-items:center;gap:1rem;flex-shrink:0}
+.db-title{font-family:var(--serif);font-size:1.2rem;font-weight:300;color:var(--dark);flex:1}
+.db-breadcrumb{display:flex;align-items:center;gap:0.4rem;font-size:0.68rem;color:var(--brown);letter-spacing:0.08em;flex-wrap:wrap}
+.db-breadcrumb span{cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.db-breadcrumb span:hover{color:var(--dark)}
+.db-breadcrumb .sep{color:var(--sand);cursor:default;text-decoration:none}
+.db-search{padding:0.75rem 1.5rem;border-bottom:1px solid var(--blush);flex-shrink:0}
+.db-search input{width:100%;border:1px solid var(--sand);border-radius:2px;padding:0.6rem 1rem;font-family:var(--sans);font-size:0.82rem;color:var(--dark);background:white;outline:none}
+.db-search input:focus{border-color:var(--brown)}
+.db-toolbar{padding:0.6rem 1.5rem;border-bottom:1px solid var(--blush);display:flex;align-items:center;gap:0.5rem;flex-shrink:0}
+.db-view-btn{background:none;border:1px solid var(--sand);color:var(--brown);width:30px;height:30px;border-radius:2px;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.db-view-btn.active,.db-view-btn:hover{background:var(--brown);color:white;border-color:var(--brown)}
+.db-count{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--sand);margin-left:auto}
+.db-body{flex:1;overflow-y:auto;padding:1.25rem 1.5rem}
+.db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.85rem}
+.db-list{display:flex;flex-direction:column;gap:0.3rem}
+.db-item{cursor:pointer;border-radius:3px;border:2px solid transparent;transition:all 0.15s;background:white}
+.db-item:hover{border-color:var(--sand);box-shadow:0 2px 8px rgba(134,109,91,0.1)}
+.db-item.selected{border-color:var(--brown);box-shadow:0 0 0 3px rgba(134,109,91,0.15)}
+.db-item-thumb{width:100%;aspect-ratio:1;object-fit:cover;display:block;border-radius:2px 2px 0 0;background:var(--blush)}
+.db-item-thumb-wrap{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--blush);border-radius:2px 2px 0 0;font-size:2rem}
+.db-item-name{font-size:0.62rem;color:var(--dark);padding:0.4rem 0.5rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--sans)}
+/* List view */
+.db-list .db-item{display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:2px}
+.db-list .db-item-thumb{width:44px;height:44px;aspect-ratio:unset;border-radius:2px;flex-shrink:0}
+.db-list .db-item-thumb-wrap{width:44px;height:44px;aspect-ratio:unset;border-radius:2px;flex-shrink:0;font-size:1.25rem}
+.db-list .db-item-name{font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0}
+.db-footer{padding:1rem 1.5rem;border-top:1px solid var(--sand);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-shrink:0}
+.db-selected-name{font-size:0.72rem;color:var(--brown);letter-spacing:0.08em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-btn-cancel{background:none;border:1px solid var(--sand);color:var(--brown);padding:0.6rem 1.25rem;font-family:var(--sans);font-size:0.63rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s}
+.db-btn-cancel:hover{border-color:var(--brown)}
+.db-btn-select{background:var(--brown);color:white;border:none;padding:0.6rem 1.5rem;font-family:var(--sans);font-size:0.63rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s}
+.db-btn-select:hover{background:var(--dark)}
+.db-btn-select:disabled{opacity:0.4;cursor:not-allowed}
+.db-loading{text-align:center;padding:3rem;font-family:var(--serif);font-size:1.2rem;font-weight:300;color:var(--sand)}
+.db-back{background:none;border:1px solid var(--sand);color:var(--brown);padding:0.35rem 0.75rem;font-family:var(--sans);font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;flex-shrink:0}
+.db-back:hover{border-color:var(--brown)}
 /* SPINNER */
 .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:rot 0.7s linear infinite;vertical-align:middle}
 @keyframes rot{to{transform:rotate(360deg)}}
@@ -1471,15 +1512,21 @@ async function doDelete(id, compositeUrl){
 
 
 
-// ─── GOOGLE DRIVE PICKER ─────────────────────────────────
+// ─── GOOGLE DRIVE BROWSER CUSTOMIZADO ───────────────────
 let gPickerTarget = null;
 let gAccessToken  = null;
 let gTokenClient  = null;
-let gPickerLoaded = false;
 
-window.addEventListener('load', ()=>{
-  if(typeof gapi !== 'undefined') gapi.load('picker', ()=>{ gPickerLoaded=true; });
-});
+// State do browser
+const DB = {
+  folderId: 'root',
+  folderStack: [{id:'root', name:'Meu Drive'}],
+  items: [],
+  selected: null,
+  view: 'grid',   // 'grid' | 'list'
+  search: '',
+  searchTimer: null
+};
 
 function openDrivePicker(side){
   gPickerTarget = side;
@@ -1490,60 +1537,205 @@ function openDrivePicker(side){
       callback: (resp)=>{
         if(resp.error){ toast('Erro de autenticação Google','err'); return; }
         gAccessToken = resp.access_token;
-        buildPicker();
+        openDriveBrowser();
       }
     });
   }
-  if(gAccessToken) buildPicker();
+  if(gAccessToken) openDriveBrowser();
   else gTokenClient.requestAccessToken({prompt:'consent'});
 }
 
-function buildPicker(){
-  if(!gPickerLoaded){
-    gapi.load('picker', ()=>{ gPickerLoaded=true; buildPicker(); });
-    return;
-  }
+function openDriveBrowser(){
+  DB.folderId = 'root';
+  DB.folderStack = [{id:'root', name:'Meu Drive'}];
+  DB.selected = null;
+  DB.search = '';
   const label = gPickerTarget==='before' ? 'Antes' : 'Depois';
-
-  // View 1: todas as imagens do Drive com thumbnails
-  const imgView = new google.picker.View(google.picker.ViewId.DOCS_IMAGES);
-  imgView.setMimeTypes('image/jpeg,image/png,image/webp,image/heic,image/heif');
-
-  // View 2: navegação por pastas
-  const folderView = new google.picker.DocsView()
-    .setIncludeFolders(true)
-    .setSelectFolderEnabled(false)
-    .setMimeTypes('image/jpeg,image/png,image/webp,image/heic,image/heif');
-
-  new google.picker.PickerBuilder()
-    .setTitle('Selecione a foto — ' + label)
-    .addView(imgView)
-    .addView(folderView)
-    .enableFeature(google.picker.Feature.NAV_HIDDEN)
-    .setOAuthToken(gAccessToken)
-    .setDeveloperKey(GOOGLE_API_KEY)
-    .setCallback(drivePickerCallback)
-    .setOrigin(window.location.origin)
-    .setSize(1000, 650)
-    .build()
-    .setVisible(true);
+  // Criar modal
+  const ov = document.createElement('div');
+  ov.className = 'db-overlay'; ov.id = 'driveBrowser';
+  ov.innerHTML = `
+    <div class="db-modal">
+      <div class="db-header">
+        <div>
+          <div class="db-title">Selecione a foto — ${label}</div>
+          <div class="db-breadcrumb" id="dbBreadcrumb"></div>
+        </div>
+        <button class="db-btn-cancel" onclick="closeDriveBrowser()">✕</button>
+      </div>
+      <div class="db-search">
+        <input type="text" id="dbSearch" placeholder="Pesquisar imagens no Drive…" oninput="dbSearchInput(this.value)">
+      </div>
+      <div class="db-toolbar">
+        <button class="db-back" id="dbBack" onclick="dbGoBack()" style="display:none">← Voltar</button>
+        <span class="db-count" id="dbCount"></span>
+        <button class="db-view-btn active" id="dbVGrid" onclick="dbSetView('grid')" title="Grade">⊞</button>
+        <button class="db-view-btn" id="dbVList" onclick="dbSetView('list')" title="Lista">☰</button>
+      </div>
+      <div class="db-body">
+        <div id="dbGrid" class="db-grid"></div>
+      </div>
+      <div class="db-footer">
+        <div class="db-selected-name" id="dbSelectedName">Nenhuma imagem selecionada</div>
+        <button class="db-btn-cancel" onclick="closeDriveBrowser()">Cancelar</button>
+        <button class="db-btn-select" id="dbSelectBtn" onclick="dbConfirmSelect()" disabled>Selecionar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e=>{ if(e.target===ov) closeDriveBrowser(); });
+  document.addEventListener('keydown', dbKeyHandler);
+  dbLoadFolder('root');
 }
 
-async function drivePickerCallback(data){
-  if(data[google.picker.Response.ACTION] !== google.picker.Action.PICKED) return;
-  const doc    = data[google.picker.Response.DOCUMENTS][0];
-  const fileId = doc[google.picker.Document.ID];
-  const name   = doc[google.picker.Document.NAME] || fileId;
+function closeDriveBrowser(){
+  const el = document.getElementById('driveBrowser');
+  if(el) el.remove();
+  document.removeEventListener('keydown', dbKeyHandler);
+}
+
+function dbKeyHandler(e){ if(e.key==='Escape') closeDriveBrowser(); }
+
+async function dbLoadFolder(folderId){
+  DB.folderId = folderId;
+  DB.selected = null;
+  const grid = document.getElementById('dbGrid');
+  const count = document.getElementById('dbCount');
+  if(!grid) return;
+  grid.innerHTML = '<div class="db-loading">Carregando…</div>';
+  count.textContent = '';
+  dbUpdateBreadcrumb();
+  dbUpdateBack();
+
+  const mime = "mimeType='application/vnd.google-apps.folder' or mimeType contains 'image/'";
+  const q = encodeURIComponent(`'${folderId}' in parents and trashed=false and (${mime})`);
+  const fields = encodeURIComponent('files(id,name,mimeType,thumbnailLink,iconLink,modifiedTime)');
+  const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=folder,name&pageSize=100`;
+
+  try{
+    const res = await fetch(url, { headers:{ Authorization:`Bearer ${gAccessToken}` } });
+    const data = await res.json();
+    DB.items = data.files || [];
+    dbRenderItems(DB.items);
+  }catch(e){
+    grid.innerHTML = '<div class="db-loading">Erro ao carregar</div>';
+  }
+}
+
+function dbSearchInput(val){
+  DB.search = val;
+  clearTimeout(DB.searchTimer);
+  if(!val.trim()){ dbLoadFolder(DB.folderId); return; }
+  DB.searchTimer = setTimeout(()=> dbSearchFiles(val), 500);
+}
+
+async function dbSearchFiles(query){
+  const grid = document.getElementById('dbGrid');
+  if(!grid) return;
+  grid.innerHTML = '<div class="db-loading">Pesquisando…</div>';
+  const q = encodeURIComponent(`name contains '${query}' and trashed=false and mimeType contains 'image/'`);
+  const fields = encodeURIComponent('files(id,name,mimeType,thumbnailLink,iconLink,modifiedTime)');
+  const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=name&pageSize=100`;
+  try{
+    const res = await fetch(url, { headers:{ Authorization:`Bearer ${gAccessToken}` } });
+    const data = await res.json();
+    DB.items = data.files || [];
+    dbRenderItems(DB.items);
+  }catch(e){
+    grid.innerHTML = '<div class="db-loading">Erro na pesquisa</div>';
+  }
+}
+
+function dbRenderItems(items){
+  const grid = document.getElementById('dbGrid');
+  const count = document.getElementById('dbCount');
+  if(!grid) return;
+  grid.className = DB.view==='grid' ? 'db-grid' : 'db-list';
+  const imgs = items.filter(f=>f.mimeType.includes('image'));
+  const folders = items.filter(f=>f.mimeType.includes('folder'));
+  count.textContent = `${folders.length} pastas · ${imgs.length} imagens`;
+  if(!items.length){ grid.innerHTML='<div class="db-loading">Nenhum arquivo encontrado</div>'; return; }
+  grid.innerHTML = items.map(f=>{
+    const isFolder = f.mimeType.includes('folder');
+    const thumb = f.thumbnailLink
+      ? `<img class="db-item-thumb" src="${f.thumbnailLink.replace('=s220','=s300')}" alt="${f.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      : '';
+    const icon = `<div class="db-item-thumb-wrap" style="display:${f.thumbnailLink?'none':'flex'}">${isFolder?'📁':'🖼️'}</div>`;
+    return `<div class="db-item" id="di-${f.id}" onclick="${isFolder?`dbOpenFolder('${f.id}','${f.name.replace(/'/g,"\'")}')` : `dbSelectItem('${f.id}','${f.name.replace(/'/g,"\'")}')` }">
+      ${thumb}${icon}
+      <div class="db-item-name" title="${f.name}">${isFolder?'📁 ':''}${f.name}</div>
+    </div>`;
+  }).join('');
+}
+
+function dbOpenFolder(id, name){
+  DB.folderStack.push({id, name});
+  DB.selected = null;
+  document.getElementById('dbSelectedName').textContent = 'Nenhuma imagem selecionada';
+  document.getElementById('dbSelectBtn').disabled = true;
+  const si = document.getElementById('dbSearch');
+  if(si) si.value = '';
+  DB.search = '';
+  dbLoadFolder(id);
+}
+
+function dbGoBack(){
+  if(DB.folderStack.length<=1) return;
+  DB.folderStack.pop();
+  const prev = DB.folderStack[DB.folderStack.length-1];
+  dbLoadFolder(prev.id);
+}
+
+function dbUpdateBreadcrumb(){
+  const bc = document.getElementById('dbBreadcrumb');
+  if(!bc) return;
+  bc.innerHTML = DB.folderStack.map((f,i)=>{
+    if(i===DB.folderStack.length-1) return `<span style="cursor:default;text-decoration:none;color:var(--dark)">${f.name}</span>`;
+    return `<span onclick="dbJumpTo(${i})">${f.name}</span><span class="sep">/</span>`;
+  }).join('');
+}
+
+function dbJumpTo(idx){
+  DB.folderStack = DB.folderStack.slice(0, idx+1);
+  const f = DB.folderStack[DB.folderStack.length-1];
+  dbLoadFolder(f.id);
+}
+
+function dbUpdateBack(){
+  const btn = document.getElementById('dbBack');
+  if(btn) btn.style.display = DB.folderStack.length>1 ? 'block' : 'none';
+}
+
+function dbSetView(v){
+  DB.view = v;
+  document.getElementById('dbVGrid').classList.toggle('active', v==='grid');
+  document.getElementById('dbVList').classList.toggle('active', v==='list');
+  dbRenderItems(DB.items);
+}
+
+function dbSelectItem(id, name){
+  DB.selected = {id, name};
+  // Visual
+  document.querySelectorAll('.db-item').forEach(el=>el.classList.remove('selected'));
+  const el = document.getElementById('di-'+id);
+  if(el) el.classList.add('selected');
+  document.getElementById('dbSelectedName').textContent = name;
+  document.getElementById('dbSelectBtn').disabled = false;
+}
+
+async function dbConfirmSelect(){
+  if(!DB.selected) return;
+  const {id, name} = DB.selected;
+  closeDriveBrowser();
   toast('Baixando do Drive…','ok');
   try{
     const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
       { headers:{ Authorization:`Bearer ${gAccessToken}` } }
     );
     if(!res.ok) throw new Error('HTTP '+res.status);
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
-    const file = new File([blob], name, {type: blob.type});
+    const file = new File([blob], name, {type: blob.type||'image/jpeg'});
     const side = gPickerTarget;
     const key  = side==='before' ? 'b' : 'a';
     S[key+'File'] = file;
@@ -1560,7 +1752,7 @@ async function drivePickerCallback(data){
     toast('Imagem importada do Drive ✓','ok');
   }catch(e){
     console.error(e);
-    toast('Erro ao baixar do Drive','err');
+    toast('Erro ao baixar do Drive — tente novamente','err');
   }
 }
 
