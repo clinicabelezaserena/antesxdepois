@@ -1727,40 +1727,88 @@ async function dbConfirmSelect(){
   if(!DB.selected) return;
   const {id, name} = DB.selected;
   closeDriveBrowser();
-  toast('Baixando do Drive…','ok');
+  toast('Baixando imagem do Drive…','ok');
+
   try{
-    const res = await fetch(
+    // 1. Buscar metadados para confirmar acesso
+    const metaRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${id}?fields=id,name,mimeType,size`,
+      { headers:{ Authorization:`Bearer ${gAccessToken}` } }
+    );
+    if(!metaRes.ok) throw new Error('Acesso negado ('+metaRes.status+')');
+    const meta = await metaRes.json();
+    toast(`Baixando: ${meta.name} (${meta.mimeType})…`, 'ok');
+
+    // 2. Download do conteúdo
+    const mediaRes = await fetch(
       `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
       { headers:{ Authorization:`Bearer ${gAccessToken}` } }
     );
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const blob = await res.blob();
-    const ext = blob.type.includes('png') ? 'png' : 'jpg';
-    const file = new File([blob], name || ('drive-image.'+ext), {type: blob.type||'image/jpeg'});
-    const side = gPickerTarget;
+    if(!mediaRes.ok) throw new Error('Download falhou ('+mediaRes.status+')');
+    const blob = await mediaRes.blob();
 
-    // Simular upload real usando DataTransfer — mesmo caminho do pickFile
-    try {
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      const inputEl = document.getElementById(side==='before' ? 'fBefore' : 'fAfter');
-      inputEl.files = dt.files;
-      pickFile(side, inputEl);
-    } catch(e) {
-      // Fallback: aplicar diretamente sem DataTransfer
-      const url = URL.createObjectURL(file);
-      S[side==='before'?'bFile':'aFile'] = file;
-      S[side==='before'?'bURL':'aURL']  = url;
-      const zone = document.getElementById(side==='before'?'zBefore':'zAfter');
-      const cont = document.getElementById(side==='before'?'cBefore':'cAfter');
-      if(zone) zone.classList.add('filled');
-      if(cont) cont.innerHTML = '<img src="'+url+'" style="width:100%;height:260px;object-fit:contain;background:#F5F2EF;display:block"><span class="badge">'+(side==='before'?'Antes':'Depois')+'</span><span class="change-btn">Alterar foto</span>';
-      sync();
-    }
-    toast('Imagem importada do Drive ✓','ok');
+    if(blob.size === 0) throw new Error('Arquivo vazio');
+    toast(`Arquivo recebido: ${(blob.size/1024).toFixed(0)}KB tipo:${blob.type}`, 'ok');
+
+    // 3. Converter para Data URL via FileReader (mais compatível que blob URL)
+    const dataUrl = await new Promise((resolve, reject)=>{
+      const fr = new FileReader();
+      fr.onload  = ()=> resolve(fr.result);
+      fr.onerror = ()=> reject(new Error('FileReader falhou'));
+      fr.readAsDataURL(blob);
+    });
+
+    if(!dataUrl || dataUrl.length < 100) throw new Error('Data URL inválida');
+
+    const side = gPickerTarget;
+    const key  = side==='before' ? 'b' : 'a';
+    const ext  = blob.type.includes('png') ? 'png' : 'jpg';
+    const file = new File([blob], (meta.name||'imagem')+'.'+ext, {type: blob.type||'image/jpeg'});
+
+    S[key+'File'] = file;
+    S[key+'URL']  = dataUrl;
+
+    // 4. Montar zona de upload diretamente via DOM (sem innerHTML com string grande)
+    const zoneId = side==='before' ? 'zBefore' : 'zAfter';
+    const contId = side==='before' ? 'cBefore' : 'cAfter';
+    const zone = document.getElementById(zoneId);
+    const cont = document.getElementById(contId);
+
+    if(!zone || !cont) throw new Error('Elementos da zona não encontrados');
+
+    zone.classList.add('filled');
+
+    // Limpar e criar elementos via DOM API
+    while(cont.firstChild) cont.removeChild(cont.firstChild);
+
+    const img = document.createElement('img');
+    img.style.width   = '100%';
+    img.style.height  = '260px';
+    img.style.objectFit = 'contain';
+    img.style.background = '#F5F2EF';
+    img.style.display = 'block';
+    img.style.borderRadius = '2px';
+    img.onerror = ()=>{ toast('Imagem não pôde ser exibida — formato não suportado','err'); };
+    // Setar src APÓS adicionar ao DOM para garantir render
+    cont.appendChild(img);
+    img.src = dataUrl;
+
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = side==='before' ? 'Antes' : 'Depois';
+    cont.appendChild(badge);
+
+    const changeBtn = document.createElement('span');
+    changeBtn.className = 'change-btn';
+    changeBtn.textContent = 'Alterar foto';
+    cont.appendChild(changeBtn);
+
+    sync();
+    toast('Imagem importada com sucesso ✓','ok');
+
   }catch(e){
-    console.error(e);
-    toast('Erro ao baixar do Drive — tente novamente','err');
+    console.error('Drive import error:', e);
+    toast('Erro: '+e.message,'err');
   }
 }
 
