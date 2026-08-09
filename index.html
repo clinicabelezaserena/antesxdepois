@@ -6,6 +6,13 @@
 <title>Beleza Serena — Galeria Antes & Depois</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
 <style>
 :root {
   --brown:  #866D5B;
@@ -17,6 +24,45 @@
   --serif:  "Cormorant Garamond", serif;
   --sans:   "Montserrat", sans-serif;
 }
+
+/* Override browser accent colors globally */
+* { accent-color: var(--brown); }
+
+/* Text selection */
+::selection { background: var(--sand); color: var(--dark); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--brown); }
+
+/* Date/month input calendar icon and text */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(45%) sepia(20%) saturate(600%) hue-rotate(340deg) brightness(85%);
+  cursor: pointer;
+}
+
+/* Focus outline — substituir azul do browser */
+input:focus-visible,
+button:focus-visible,
+select:focus-visible {
+  outline: 1.5px solid var(--brown);
+  outline-offset: 1px;
+}
+
+/* Checkbox customizado */
+input[type="checkbox"] {
+  accent-color: var(--brown);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* Sort btn active state já usa --brown, mas garantir que link colors não sejam azuis */
+a { color: var(--brown); }
+a:hover { color: var(--dark); }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--cream);color:var(--dark);min-height:100vh}
 
@@ -51,8 +97,9 @@ section.active{display:block}
 .form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;margin-bottom:2rem}
 .field{display:flex;flex-direction:column;gap:0.45rem}
 .field label{font-size:0.63rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown);font-weight:500}
-.field input{border:1px solid var(--sand);border-radius:2px;padding:0.75rem 1rem;font-family:var(--sans);font-size:0.85rem;color:var(--dark);background:white;outline:none;transition:border-color 0.2s;width:100%}
+.field input{border:1px solid var(--sand);border-radius:2px;padding:0.75rem 1rem;font-family:var(--sans);font-size:0.85rem;color:var(--dark);background:white;outline:none;transition:border-color 0.2s;width:100%;accent-color:var(--brown);color-scheme:light}
 .field input:focus{border-color:var(--brown)}
+
 
 /* BUTTONS */
 .btn-row{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
@@ -86,8 +133,12 @@ section.active{display:block}
 .filters{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:1rem;margin-bottom:2rem;align-items:end}
 .f-field{display:flex;flex-direction:column;gap:0.45rem}
 .f-field label{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--brown);font-weight:500}
-.f-field input{border:1px solid var(--sand);border-radius:2px;padding:0.65rem 1rem;font-family:var(--sans);font-size:0.82rem;color:var(--dark);background:white;outline:none;transition:border-color 0.2s;width:100%}
+.f-field input{border:1px solid var(--sand);border-radius:2px;padding:0.65rem 1rem;font-family:var(--sans);font-size:0.82rem;color:var(--dark);background:white;outline:none;transition:border-color 0.2s;width:100%;accent-color:var(--brown);color-scheme:light}
 .f-field input:focus{border-color:var(--brown)}
+.f-field-input{border:1px solid var(--sand);border-radius:2px;padding:0.65rem 1rem;font-family:var(--sans);font-size:0.82rem;color:var(--dark);background:white;outline:none;transition:border-color 0.2s;width:100%}
+.f-field-input:focus{border-color:var(--brown)}
+
+/* date inputs handled by Flatpickr */
 .btn-clear{background:none;border:1px solid var(--sand);color:var(--brown);padding:0.65rem 1.25rem;font-family:var(--sans);font-size:0.63rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;white-space:nowrap}
 .btn-clear:hover{border-color:var(--brown)}
 .gal-count{font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--brown);margin-bottom:1.25rem}
@@ -192,6 +243,116 @@ section.active{display:block}
 .modal-confirm{background:#8B2E2E;color:white;border:none;padding:0.6rem 1.25rem;font-family:var(--sans);font-size:0.63rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s}
 .modal-confirm:hover{background:#6e2222}
 
+/* FLATPICKR — PALETA BELEZA SERENA */
+.flatpickr-calendar {
+  font-family: var(--sans) !important;
+  font-size: 0.78rem !important;
+  background: var(--cream) !important;
+  border: 1px solid var(--sand) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 24px rgba(134,109,91,0.12) !important;
+  color: var(--dark) !important;
+}
+.flatpickr-months {
+  background: var(--brown) !important;
+  border-radius: 3px 3px 0 0 !important;
+  padding: 0.25rem 0 !important;
+}
+.flatpickr-month, .flatpickr-current-month,
+.flatpickr-monthDropdown-months,
+.flatpickr-current-month .numInputWrapper {
+  background: transparent !important;
+  color: white !important;
+  fill: white !important;
+}
+.flatpickr-current-month select.flatpickr-monthDropdown-months {
+  color: white !important;
+  font-family: var(--sans) !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.05em !important;
+}
+.flatpickr-current-month input.cur-year {
+  color: white !important;
+  font-family: var(--sans) !important;
+  font-weight: 500 !important;
+}
+.flatpickr-prev-month, .flatpickr-next-month {
+  color: white !important;
+  fill: white !important;
+}
+.flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg {
+  fill: var(--sand) !important;
+}
+.flatpickr-weekdays { background: var(--blush) !important; }
+span.flatpickr-weekday {
+  background: transparent !important;
+  color: var(--brown) !important;
+  font-weight: 600 !important;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.1em !important;
+}
+.flatpickr-day {
+  color: var(--dark) !important;
+  border-radius: 2px !important;
+  font-family: var(--sans) !important;
+}
+.flatpickr-day:hover {
+  background: var(--blush) !important;
+  border-color: var(--sand) !important;
+  color: var(--dark) !important;
+}
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+  background: var(--brown) !important;
+  border-color: var(--brown) !important;
+  color: white !important;
+}
+.flatpickr-day.today {
+  border-color: var(--sand) !important;
+  font-weight: 600 !important;
+}
+.flatpickr-day.today:hover {
+  background: var(--sand) !important;
+  border-color: var(--sand) !important;
+}
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+  color: var(--sand) !important;
+}
+.numInputWrapper:hover { background: transparent !important; }
+.numInputWrapper span { border-color: rgba(255,255,255,0.3) !important; }
+.numInputWrapper span svg { fill: rgba(255,255,255,0.8) !important; }
+/* Mês picker */
+.flatpickr-monthSelect-month {
+  color: var(--dark) !important;
+  border-radius: 2px !important;
+  font-family: var(--sans) !important;
+  font-size: 0.75rem !important;
+}
+.flatpickr-monthSelect-month:hover {
+  background: var(--blush) !important;
+  color: var(--dark) !important;
+}
+.flatpickr-monthSelect-month.selected {
+  background: var(--brown) !important;
+  color: white !important;
+}
+/* Input visual */
+.flatpickr-input {
+  cursor: pointer !important;
+}
+.flatpickr-input:focus {
+  border-color: var(--brown) !important;
+  outline: none !important;
+}
+
+
+/* GOOGLE DRIVE PICKER */
+.btn-gdrive{display:inline-flex;align-items:center;justify-content:center;gap:0.55rem;background:none;border:1px solid var(--sand);color:var(--brown);padding:0.55rem 1rem;font-family:var(--sans);font-size:0.63rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;width:100%}
+.btn-gdrive:hover{border-color:var(--brown);background:var(--blush)}
+.gdrive-or{text-align:center;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--sand);margin:0.4rem 0;display:flex;align-items:center;gap:0.6rem}
+.gdrive-or::before,.gdrive-or::after{content:'';flex:1;height:1px;background:var(--blush)}
 /* SPINNER */
 .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:rot 0.7s linear infinite;vertical-align:middle}
 @keyframes rot{to{transform:rotate(360deg)}}
@@ -231,6 +392,8 @@ const SUPABASE_URL     = 'https://plahqpjylmtkbxktxawp.supabase.co';
 const SUPABASE_ANON    = 'sb_publishable_2oXLQQ9KXgs9C8UGLu0jLg_zDZs1WzV';
 const CLOUDINARY_NAME  = 'belezaserena';
 const CLOUDINARY_PRESET= 'beleza_serena';
+const GOOGLE_API_KEY   = 'AIzaSyBWH_TJLtAYhpjFPeJuGHtnuypakzpAgRs';
+const GOOGLE_CLIENT_ID = '82583793796-hb0c8vnulvr57mqb2amo70ep83odn66b.apps.googleusercontent.com';
 </script>
 
 <canvas id="canvas"></canvas>
@@ -251,22 +414,36 @@ const CLOUDINARY_PRESET= 'beleza_serena';
 
   <div class="upload-grid">
 
-    <div class="upload-zone" id="zBefore" onclick="document.getElementById('fBefore').click()">
-      <input type="file" id="fBefore" accept="image/*" style="display:none" onchange="pickFile('before',this)">
-      <div class="zone-content" id="cBefore">
-        <div class="zone-icon">◎</div>
-        <div class="zone-lbl">Foto Antes</div>
-        <div class="zone-hint">Clique para selecionar</div>
+    <div style="display:flex;flex-direction:column;gap:0.45rem">
+      <div class="upload-zone" id="zBefore" onclick="document.getElementById('fBefore').click()">
+        <input type="file" id="fBefore" accept="image/*" style="display:none" onchange="pickFile('before',this)">
+        <div class="zone-content" id="cBefore">
+          <div class="zone-icon">◎</div>
+          <div class="zone-lbl">Foto Antes</div>
+          <div class="zone-hint">Clique para selecionar</div>
+        </div>
       </div>
+      <div class="gdrive-or">ou</div>
+      <button class="btn-gdrive" onclick="openDrivePicker('before')">
+        <svg width="13" height="11" viewBox="0 0 24 20"><path d="M1.5 17.5L6 9.5l4.5 7.5H1.5z" fill="#866D5B"/><path d="M6 9.5h12l-4-7H2L6 9.5z" fill="#D6C5B3"/><path d="M10.5 17H22.5l-4.5-7.5H6L10.5 17z" fill="#866D5B" opacity=".65"/></svg>
+        Importar do Google Drive — Antes
+      </button>
     </div>
 
-    <div class="upload-zone" id="zAfter" onclick="document.getElementById('fAfter').click()">
-      <input type="file" id="fAfter" accept="image/*" style="display:none" onchange="pickFile('after',this)">
-      <div class="zone-content" id="cAfter">
-        <div class="zone-icon">◉</div>
-        <div class="zone-lbl">Foto Depois</div>
-        <div class="zone-hint">Clique para selecionar</div>
+    <div style="display:flex;flex-direction:column;gap:0.45rem">
+      <div class="upload-zone" id="zAfter" onclick="document.getElementById('fAfter').click()">
+        <input type="file" id="fAfter" accept="image/*" style="display:none" onchange="pickFile('after',this)">
+        <div class="zone-content" id="cAfter">
+          <div class="zone-icon">◉</div>
+          <div class="zone-lbl">Foto Depois</div>
+          <div class="zone-hint">Clique para selecionar</div>
+        </div>
       </div>
+      <div class="gdrive-or">ou</div>
+      <button class="btn-gdrive" onclick="openDrivePicker('after')">
+        <svg width="13" height="11" viewBox="0 0 24 20"><path d="M1.5 17.5L6 9.5l4.5 7.5H1.5z" fill="#866D5B"/><path d="M6 9.5h12l-4-7H2L6 9.5z" fill="#D6C5B3"/><path d="M10.5 17H22.5l-4.5-7.5H6L10.5 17z" fill="#866D5B" opacity=".65"/></svg>
+        Importar do Google Drive — Depois
+      </button>
     </div>
 
   </div>
@@ -278,7 +455,7 @@ const CLOUDINARY_PRESET= 'beleza_serena';
     </div>
     <div class="field">
       <label>Data do procedimento</label>
-      <input type="date" id="fDate" onchange="sync()">
+      <input type="text" id="fDate" placeholder="dd/mm/aaaa" readonly class="flatpickr-input" style="cursor:pointer">
     </div>
     <div class="field">
       <label>Procedimento</label>
@@ -444,7 +621,7 @@ const CLOUDINARY_PRESET= 'beleza_serena';
     </div>
     <div class="f-field">
       <label>Data exata</label>
-      <input type="date" id="fF3" onchange="filterG()">
+      <input type="text" id="fF3" placeholder="dd/mm/aaaa" readonly class="flatpickr-input f-field-input">
     </div>
     <button class="btn-clear" onclick="clearF()">Limpar tudo</button>
   </div>
@@ -453,11 +630,11 @@ const CLOUDINARY_PRESET= 'beleza_serena';
   <div class="period-row">
     <div class="f-field">
       <label>Período — de</label>
-      <input type="month" id="fPeriodFrom" onchange="filterG()">
+      <input type="text" id="fPeriodFrom" placeholder="mm/aaaa" readonly class="flatpickr-input f-field-input">
     </div>
     <div class="f-field">
       <label>Até</label>
-      <input type="month" id="fPeriodTo" onchange="filterG()">
+      <input type="text" id="fPeriodTo" placeholder="mm/aaaa" readonly class="flatpickr-input f-field-input">
     </div>
     <div style="padding-bottom:0.1rem">
       <button class="btn-clear" onclick="clearPeriod()" style="height:38px">Limpar período</button>
@@ -511,7 +688,9 @@ const S = {
   favOnly: false,
   selected: new Set(),
   selectMode: false,
-  currentView: 'grid'
+  currentView: 'grid',
+  periodFrom: '',
+  periodTo: ''
 };
 
 // ─── NAVEGAÇÃO ───────────────────────────────────────────
@@ -553,7 +732,10 @@ function pickFile(side, input){
 function sync(){
   if(S.bURL) document.getElementById('pBefore').src = S.bURL;
   if(S.aURL) document.getElementById('pAfter').src  = S.aURL;
-  const name = v('fName'), date = v('fDate'), proc = v('fProc');
+  const name = v('fName');
+  const dateEl = document.getElementById('fDate');
+  const date = (dateEl && dateEl.dataset.isoDate) ? dateEl.dataset.isoDate : '';
+  const proc = v('fProc');
   document.getElementById('pProc').textContent = proc || '—';
   const dateStr = date ? fmtDate(date) : '';
   document.getElementById('pMeta').textContent = [name, dateStr].filter(Boolean).join('  ·  ') || '—';
@@ -628,7 +810,10 @@ function buildComposite(bSrc, aSrc, proc, name, date){
 // ─── SALVAR REGISTRO ─────────────────────────────────────
 // Salva na galeria com os ajustes da prévia aplicados
 async function saveWithAdj(){
-  const name = v('fName').trim(), date = v('fDate'), proc = v('fProc').trim();
+  const name = v('fName').trim();
+  const dateEl2 = document.getElementById('fDate');
+  const date = (dateEl2 && dateEl2.dataset.isoDate) ? dateEl2.dataset.isoDate : '';
+  const proc = v('fProc').trim();
   if(!S.bURL || !S.aURL || !name || !date || !proc){
     toast('Preencha todos os campos primeiro','err'); return;
   }
@@ -675,7 +860,10 @@ async function saveWithAdj(){
 }
 
 async function saveRecord(){
-  const name = v('fName').trim(), date = v('fDate'), proc = v('fProc').trim();
+  const name = v('fName').trim();
+  const dateEl2 = document.getElementById('fDate');
+  const date = (dateEl2 && dateEl2.dataset.isoDate) ? dateEl2.dataset.isoDate : '';
+  const proc = v('fProc').trim();
   const btn  = document.getElementById('btnSave');
   const prog = document.getElementById('prog');
   const fill = document.getElementById('progFill');
@@ -869,7 +1057,9 @@ function getAdj(side){
 async function dlCurrent(){
   const proc = v('fProc') || document.getElementById('pProc').textContent;
   const name = v('fName');
-  const date = v('fDate') ? fmtDate(v('fDate')) : '';
+  const dateElDl = document.getElementById('fDate');
+  const dateIso = (dateElDl && dateElDl.dataset.isoDate) ? dateElDl.dataset.isoDate : '';
+  const date = dateIso ? fmtDate(dateIso) : '';
   if(!S.bURL || !S.aURL){ toast('Selecione as duas fotos primeiro','err'); return; }
   const cv = await buildDownloadCanvas(S.bURL, S.aURL, proc, name, date, getAdj('B'), getAdj('A'));
   const a=document.createElement('a');
@@ -988,9 +1178,12 @@ function renderG(recs){
 function filterG(){
   const n=document.getElementById('fF1').value.toLowerCase();
   const p=document.getElementById('fF2').value.toLowerCase();
-  const d=document.getElementById('fF3').value;
-  const pFrom=document.getElementById('fPeriodFrom').value;
-  const pTo=document.getElementById('fPeriodTo').value;
+  const fF3el=document.getElementById('fF3');
+  const d=(fF3el && fF3el.dataset.isoDate) ? fF3el.dataset.isoDate : '';
+  const fpFromEl=document.getElementById('fPeriodFrom');
+  const fpToEl=document.getElementById('fPeriodTo');
+  const pFrom=(fpFromEl && fpFromEl.dataset.isoDate) ? fpFromEl.dataset.isoDate : '';
+  const pTo=(fpToEl && fpToEl.dataset.isoDate) ? fpToEl.dataset.isoDate : '';
 
   let recs=S.records.filter(r=>{
     if(n && !r.patient_name.toLowerCase().includes(n)) return false;
@@ -1016,13 +1209,19 @@ function filterG(){
 }
 
 function clearPeriod(){
-  document.getElementById('fPeriodFrom').value='';
-  document.getElementById('fPeriodTo').value='';
+  ['fPeriodFrom','fPeriodTo'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el._flatpickr && el._flatpickr.clear(); el.dataset.isoDate=''; }
+  });
   filterG();
 }
 
 function clearF(){
-  ['fF1','fF2','fF3','fPeriodFrom','fPeriodTo'].forEach(id=>document.getElementById(id).value='');
+  ['fF1','fF2'].forEach(id=>document.getElementById(id).value='');
+  ['fF3','fPeriodFrom','fPeriodTo'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el._flatpickr && el._flatpickr.clear(); el.dataset.isoDate=''; }
+  });
   S.favOnly=false;
   document.getElementById('favToggle').classList.remove('active');
   document.getElementById('favToggle').textContent='☆ Somente favoritos';
@@ -1271,12 +1470,137 @@ async function doDelete(id, compositeUrl){
 }
 
 
+
+// ─── GOOGLE DRIVE PICKER ─────────────────────────────────
+let gPickerTarget = null;
+let gAccessToken  = null;
+let gTokenClient  = null;
+let gPickerLoaded = false;
+
+window.addEventListener('load', ()=>{
+  if(typeof gapi !== 'undefined') gapi.load('picker', ()=>{ gPickerLoaded=true; });
+});
+
+function openDrivePicker(side){
+  gPickerTarget = side;
+  if(!gTokenClient){
+    gTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive.readonly',
+      callback: (resp)=>{
+        if(resp.error){ toast('Erro de autenticação Google','err'); return; }
+        gAccessToken = resp.access_token;
+        buildPicker();
+      }
+    });
+  }
+  if(gAccessToken) buildPicker();
+  else gTokenClient.requestAccessToken({prompt:'consent'});
+}
+
+function buildPicker(){
+  if(!gPickerLoaded){
+    gapi.load('picker', ()=>{ gPickerLoaded=true; buildPicker(); });
+    return;
+  }
+  const label = gPickerTarget==='before' ? 'Antes' : 'Depois';
+  const view = new google.picker.View(google.picker.ViewId.DOCS_IMAGES);
+  new google.picker.PickerBuilder()
+    .setTitle('Selecione a foto — ' + label)
+    .addView(view)
+    .setOAuthToken(gAccessToken)
+    .setDeveloperKey(GOOGLE_API_KEY)
+    .setCallback(drivePickerCallback)
+    .setOrigin(window.location.origin)
+    .build()
+    .setVisible(true);
+}
+
+async function drivePickerCallback(data){
+  if(data[google.picker.Response.ACTION] !== google.picker.Action.PICKED) return;
+  const doc    = data[google.picker.Response.DOCUMENTS][0];
+  const fileId = doc[google.picker.Document.ID];
+  const name   = doc[google.picker.Document.NAME] || fileId;
+  toast('Baixando do Drive…','ok');
+  try{
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      { headers:{ Authorization:`Bearer ${gAccessToken}` } }
+    );
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const file = new File([blob], name, {type: blob.type});
+    const side = gPickerTarget;
+    const key  = side==='before' ? 'b' : 'a';
+    S[key+'File'] = file;
+    S[key+'URL']  = url;
+    const zone = document.getElementById(side==='before'?'zBefore':'zAfter');
+    const cont = document.getElementById(side==='before'?'cBefore':'cAfter');
+    zone.classList.add('filled');
+    cont.innerHTML = `
+      <img src="${url}" alt="${side}" style="width:100%;height:260px;object-fit:contain;background:#F5F2EF;display:block;border-radius:2px">
+      <span class="badge">${side==='before'?'Antes':'Depois'}</span>
+      <span class="change-btn">Alterar foto</span>
+    `;
+    sync();
+    toast('Imagem importada do Drive ✓','ok');
+  }catch(e){
+    console.error(e);
+    toast('Erro ao baixar do Drive','err');
+  }
+}
+
 function v(id){ return document.getElementById(id).value; }
 function fmtDate(d){ if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function toast(msg,type){ const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast ${type} show`; setTimeout(()=>t.classList.remove('show'),3500); }
 
-document.getElementById('fDate').valueAsDate = new Date();
+// ── FLATPICKR INIT ──────────────────────────────────────
+// Upload: data do procedimento
+const fpDate = flatpickr('#fDate', {
+  locale: 'pt',
+  dateFormat: 'd/m/Y',
+  altInput: false,
+  defaultDate: new Date(),
+  onChange(sel, dateStr, fp){
+    // Guarda valor no formato YYYY-MM-DD para o banco
+    fp.element.dataset.isoDate = fp.formatDate(sel[0], 'Y-m-d');
+    sync();
+  }
+});
+
+// Galeria: data exata
+flatpickr('#fF3', {
+  locale: 'pt',
+  dateFormat: 'd/m/Y',
+  onChange(sel, dateStr, fp){
+    fp.element.dataset.isoDate = fp.formatDate(sel[0], 'Y-m-d');
+    filterG();
+  },
+  onReady(sel, dateStr, fp){
+    fp.element.dataset.isoDate = '';
+  }
+});
+
+// Galeria: período de/até (month picker)
+flatpickr('#fPeriodFrom', {
+  locale: 'pt',
+  plugins: [new monthSelectPlugin({shorthand: false, dateFormat: 'm/Y', altFormat: 'm/Y'})],
+  onChange(sel, dateStr, fp){
+    fp.element.dataset.isoDate = fp.formatDate(sel[0], 'Y-m');
+    filterG();
+  }
+});
+
+flatpickr('#fPeriodTo', {
+  locale: 'pt',
+  plugins: [new monthSelectPlugin({shorthand: false, dateFormat: 'm/Y', altFormat: 'm/Y'})],
+  onChange(sel, dateStr, fp){
+    fp.element.dataset.isoDate = fp.formatDate(sel[0], 'Y-m');
+    filterG();
+  }
+});
 </script>
 </body>
 </html>
