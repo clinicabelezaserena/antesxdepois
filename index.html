@@ -1725,31 +1725,18 @@ function dbSelectItem(id, name){
 // Converte blob (incluindo HEIC) para URL displayável via canvas
 function blobToDisplayableURL(blob){
   return new Promise((resolve)=>{
-    const img = new Image();
-    const tmpUrl = URL.createObjectURL(blob);
-    img.onload = ()=>{
-      const cv = document.createElement('canvas');
-      cv.width = img.naturalWidth;
-      cv.height = img.naturalHeight;
-      cv.getContext('2d').drawImage(img,0,0);
-      URL.revokeObjectURL(tmpUrl);
-      cv.toBlob(outBlob=>{
-        resolve(URL.createObjectURL(outBlob));
-      },'image/jpeg',0.95);
-    };
-    img.onerror = ()=>{
-      // fallback: usar blob original
-      resolve(tmpUrl);
-    };
-    img.src = tmpUrl;
+    const reader = new FileReader();
+    reader.onload = (e)=> resolve(e.target.result);
+    reader.onerror = ()=> resolve(URL.createObjectURL(blob));
+    reader.readAsDataURL(blob);
   });
 }
 
 // Aplica imagem importada do Drive na zona de upload
-function applyDriveImage(side, url, file){
+function applyDriveImage(side, dataUrl, file){
   const key  = side==='before' ? 'b' : 'a';
   S[key+'File'] = file;
-  S[key+'URL']  = url;
+  S[key+'URL']  = dataUrl;  // Data URL é sempre displayável
 
   const zoneId = side==='before' ? 'zBefore' : 'zAfter';
   const contId = side==='before' ? 'cBefore' : 'cAfter';
@@ -1758,21 +1745,11 @@ function applyDriveImage(side, url, file){
 
   if(zone) zone.classList.add('filled');
   if(cont){
-    // Criar elementos programaticamente (evita problemas de escaping)
-    cont.innerHTML = '';
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = side;
-    img.style.cssText = 'width:100%;height:260px;object-fit:contain;background:#F5F2EF;display:block;border-radius:2px';
-    const badge = document.createElement('span');
-    badge.className = 'badge';
-    badge.textContent = side==='before' ? 'Antes' : 'Depois';
-    const change = document.createElement('span');
-    change.className = 'change-btn';
-    change.textContent = 'Alterar foto';
-    cont.appendChild(img);
-    cont.appendChild(badge);
-    cont.appendChild(change);
+    cont.innerHTML = `
+      <img src="${dataUrl}" style="width:100%;height:260px;object-fit:contain;background:#F5F2EF;display:block;border-radius:2px" alt="${side}">
+      <span class="badge">${side==='before'?'Antes':'Depois'}</span>
+      <span class="change-btn">Alterar foto</span>
+    `;
   }
   sync();
 }
@@ -1790,13 +1767,13 @@ async function dbConfirmSelect(){
     if(!res.ok) throw new Error('HTTP '+res.status);
     const blob = await res.blob();
 
-    // Converter para JPEG via canvas para garantir compatibilidade (HEIC etc)
-    const url = await blobToDisplayableURL(blob);
-    const displayBlob = await fetch(url).then(r=>r.blob());
-    const file = new File([displayBlob], name.replace(/\.heic$/i,'.jpg'), {type:'image/jpeg'});
+    // Converter para Data URL (suporta JPEG, PNG, HEIC, WebP)
+    const dataUrl = await blobToDisplayableURL(blob);
+    const ext = blob.type.includes('png') ? 'png' : 'jpg';
+    const file = new File([blob], name.replace(/\.[^.]+$/, '.'+ext), {type: blob.type||'image/jpeg'});
 
     const side = gPickerTarget;
-    applyDriveImage(side, url, file);
+    applyDriveImage(side, dataUrl, file);
     toast('Imagem importada do Drive ✓','ok');
   }catch(e){
     console.error(e);
