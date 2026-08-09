@@ -1504,14 +1504,27 @@ function buildPicker(){
     return;
   }
   const label = gPickerTarget==='before' ? 'Antes' : 'Depois';
-  const view = new google.picker.View(google.picker.ViewId.DOCS_IMAGES);
+
+  // View 1: todas as imagens do Drive com thumbnails
+  const imgView = new google.picker.View(google.picker.ViewId.DOCS_IMAGES);
+  imgView.setMimeTypes('image/jpeg,image/png,image/webp,image/heic,image/heif');
+
+  // View 2: navegação por pastas
+  const folderView = new google.picker.DocsView()
+    .setIncludeFolders(true)
+    .setSelectFolderEnabled(false)
+    .setMimeTypes('image/jpeg,image/png,image/webp,image/heic,image/heif');
+
   new google.picker.PickerBuilder()
     .setTitle('Selecione a foto — ' + label)
-    .addView(view)
+    .addView(imgView)
+    .addView(folderView)
+    .enableFeature(google.picker.Feature.NAV_HIDDEN)
     .setOAuthToken(gAccessToken)
     .setDeveloperKey(GOOGLE_API_KEY)
     .setCallback(drivePickerCallback)
     .setOrigin(window.location.origin)
+    .setSize(1000, 650)
     .build()
     .setVisible(true);
 }
